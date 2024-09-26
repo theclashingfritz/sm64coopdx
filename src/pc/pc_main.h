@@ -12,6 +12,7 @@ extern "C" {
 
 #include "gfx/gfx_dxgi.h"
 #include "gfx/gfx_sdl.h"
+#include "gfx/gfx_vulkan.h"
 #include "gfx/gfx_dummy.h"
 
 #if defined(WAPI_SDL1) || defined(WAPI_SDL2)
@@ -34,6 +35,9 @@ extern "C" {
 # else
 #  define RAPI_NAME "OpenGL"
 # endif
+#elif defined(RAPI_VULKAN)
+# define RAPI gfx_vulkan_api
+# define RAPI_NAME "Vulkan"
 #elif defined(RAPI_DUMMY)
 # define RAPI gfx_dummy_renderer_api
 # define RAPI_NAME "Dummy"

@@ -119,6 +119,10 @@ static void gfx_dummy_wm_set_clipboard_text(UNUSED char* text) {
 static void gfx_dummy_wm_set_cursor_visible(UNUSED bool visible) {
 }
 
+static void *gfx_dummy_wm_get_window(void) {
+    return NULL;
+}
+
 static bool gfx_dummy_wm_has_focus(void) {
     return true;
 }
@@ -219,6 +223,7 @@ struct GfxWindowManagerAPI gfx_dummy_wm_api = {
     gfx_dummy_wm_get_max_msaa,
     gfx_dummy_wm_set_window_title,
     gfx_dummy_wm_reset_window_title,
+    gfx_dummy_wm_get_window,
     gfx_dummy_wm_has_focus
 };
 

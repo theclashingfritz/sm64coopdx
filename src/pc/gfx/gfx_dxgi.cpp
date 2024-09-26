@@ -780,6 +780,7 @@ struct GfxWindowManagerAPI gfx_dxgi = {
     gfx_dxgi_get_max_msaa,
     gfx_dxgi_set_window_title,
     gfx_dxgi_reset_window_title,
+    gfx_dxgi_get_h_wnd,
     gfx_dxgi_has_focus
 };
 

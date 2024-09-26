@@ -58,8 +58,10 @@
 static const f64 sFrameTime = 1.0 / ((double)FRAMERATE);
 static f64 sFrameTargetTime = 0;
 
-static SDL_Window *wnd;
+static SDL_Window *wnd = NULL;
+#if defined(RAPI_GL) || defined(RAPI_GL_LEGACY)
 static SDL_GLContext ctx = NULL;
+#endif
 
 static kb_callback_t kb_key_down = NULL;
 static kb_callback_t kb_key_up = NULL;
@@ -144,7 +146,9 @@ static void gfx_sdl_init(const char *window_title) {
         xpos, ypos, configWindow.w, configWindow.h,
         SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
     );
+#if defined(RAPI_GL) || defined(RAPI_GL_LEGACY)
     ctx = SDL_GL_CreateContext(wnd);
+#endif
 
     gfx_sdl_set_vsync(configWindow.vsync);
 
@@ -290,9 +294,15 @@ static void gfx_sdl_reset_window_title(void) {
     SDL_SetWindowTitle(wnd, TITLE);
 }
 
+SDL_Window *gfx_sdl_get_window(void) {
+    return wnd;
+}
+
 static void gfx_sdl_shutdown(void) {
     if (SDL_WasInit(0)) {
+#if defined(RAPI_GL) || defined(RAPI_GL_LEGACY)
         if (ctx) { SDL_GL_DeleteContext(ctx); ctx = NULL; }
+#endif
         if (wnd) { SDL_DestroyWindow(wnd); wnd = NULL; }
         SDL_Quit();
     }
@@ -328,6 +338,7 @@ struct GfxWindowManagerAPI gfx_sdl = {
     gfx_sdl_get_max_msaa,
     gfx_sdl_set_window_title,
     gfx_sdl_reset_window_title,
+    gfx_sdl_get_window,
     gfx_sdl_has_focus
 };
 

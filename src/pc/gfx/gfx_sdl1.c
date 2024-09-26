@@ -205,6 +205,10 @@ static void gfx_sdl_shutdown(void) {
         SDL_Quit();
 }
 
+static void *gfx_sdl_get_window(void) {
+    return NULL;
+}
+
 static bool gfx_sdl_has_focus(void) {
     return SDL_GetAppState() & SDL_APPINPUTFOCUS;
 }
@@ -235,6 +239,7 @@ struct GfxWindowManagerAPI gfx_sdl = {
     gfx_sdl_get_max_msaa,
     gfx_sdl_set_window_title,
     gfx_sdl_reset_window_title,
+    gfx_sdl_get_window,
     gfx_sdl_has_focus
 };
 
