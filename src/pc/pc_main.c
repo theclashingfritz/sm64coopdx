@@ -101,6 +101,10 @@ u8 gLuaVolumeLevel = 127;
 u8 gLuaVolumeSfx = 127;
 u8 gLuaVolumeEnv = 127;
 
+#define BUFFERSIZ 8192
+char gStdoutBuffer[BUFFERSIZ] = { 0 };
+char gStderrBuffer[BUFFERSIZ] = { 0 };
+
 static struct AudioAPI *audio_api;
 struct GfxWindowManagerAPI *wm_api = &WAPI;
 
@@ -399,6 +403,13 @@ void* main_game_init(UNUSED void* dummy) {
 int main(int argc, char *argv[]) {
     // handle terminal arguments
     if (!parse_cli_opts(argc, argv)) { return 0; }
+    
+    // Set a buffer for stdout and stderr. This will make console outputs less frequent and
+    // less burdensome on the game.
+    if (gCLIOpts.console) {
+        setvbuf(stdout, gStdoutBuffer, _IOLBF, BUFFERSIZ);
+        setvbuf(stderr, gStderrBuffer, _IOLBF, BUFFERSIZ);
+    }
 
 #ifdef _WIN32
     // handle Windows console
@@ -516,10 +527,7 @@ int main(int argc, char *argv[]) {
         discord_update();
 #endif
         mumble_update();
-#ifdef DEBUG
-        fflush(stdout);
-        fflush(stderr);
-#endif
+        
         CTX_END(CTX_TOTAL);
 
 #ifdef DEVELOPMENT
@@ -527,6 +535,11 @@ int main(int argc, char *argv[]) {
 #endif
         djui_lua_profiler_update();
     }
+    
+#ifdef DEBUG
+    fflush(stdout);
+    fflush(stderr);
+#endif
 
     return 0;
 }
