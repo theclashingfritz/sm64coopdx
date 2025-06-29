@@ -459,12 +459,12 @@ static void gfx_d3d11_upload_texture(const uint8_t *rgba32_buf, int width, int h
     texture_desc.Width = width;
     texture_desc.Height = height;
     texture_desc.Usage = D3D11_USAGE_IMMUTABLE;
-    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    texture_desc.CPUAccessFlags = 0;
-    texture_desc.MiscFlags = 0; // D3D11_RESOURCE_MISC_GENERATE_MIPS ?
+    texture_desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
     texture_desc.ArraySize = 1;
     texture_desc.MipLevels = 1;
+    texture_desc.CPUAccessFlags = 0;
     texture_desc.SampleDesc.Count = 1;
     texture_desc.SampleDesc.Quality = 0;
 
@@ -496,6 +496,8 @@ static void gfx_d3d11_upload_texture(const uint8_t *rgba32_buf, int width, int h
     }
 
     ThrowIfFailed(d3d.device->CreateShaderResourceView(texture.Get(), &resource_view_desc, texture_data->resource_view.GetAddressOf()));
+    d3d.context->UpdateSubresource(texture.Get(), 0, 0, rgba32_buf, resource_data.SysMemPitch, 0);
+    d3d.context->GenerateMips(texture_data->resource_view.Get());
 }
 
 static void gfx_d3d11_set_sampler_parameters(int tile, bool linear_filter, uint32_t cms, uint32_t cmt) {
@@ -562,74 +564,79 @@ static void gfx_d3d11_set_use_alpha(bool use_alpha) {
     // Already part of the pipeline state from shader info
 }
 
-static void gfx_d3d11_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t buf_vbo_num_tris) {
+static void gfx_d3d11_refresh_depth() {
+    if (d3d.last_depth_test == d3d.depth_test && d3d.last_depth_mask == d3d.depth_mask) { return; }
 
-    if (d3d.last_depth_test != d3d.depth_test || d3d.last_depth_mask != d3d.depth_mask) {
-        d3d.last_depth_test = d3d.depth_test;
-        d3d.last_depth_mask = d3d.depth_mask;
+    d3d.last_depth_test = d3d.depth_test;
+    d3d.last_depth_mask = d3d.depth_mask;
 
-        d3d.depth_stencil_state.Reset();
+    d3d.depth_stencil_state.Reset();
 
-        D3D11_DEPTH_STENCIL_DESC depth_stencil_desc;
-        ZeroMemory(&depth_stencil_desc, sizeof(D3D11_DEPTH_STENCIL_DESC));
+    D3D11_DEPTH_STENCIL_DESC depth_stencil_desc;
+    ZeroMemory(&depth_stencil_desc, sizeof(D3D11_DEPTH_STENCIL_DESC));
 
-        depth_stencil_desc.DepthEnable = d3d.depth_test;
-        depth_stencil_desc.DepthWriteMask = d3d.depth_mask ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
-        depth_stencil_desc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-        depth_stencil_desc.StencilEnable = false;
+    depth_stencil_desc.DepthEnable = d3d.depth_test;
+    depth_stencil_desc.DepthWriteMask = d3d.depth_mask ? D3D11_DEPTH_WRITE_MASK_ALL : D3D11_DEPTH_WRITE_MASK_ZERO;
+    depth_stencil_desc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+    depth_stencil_desc.StencilEnable = false;
 
-        ThrowIfFailed(d3d.device->CreateDepthStencilState(&depth_stencil_desc, d3d.depth_stencil_state.GetAddressOf()));
-        d3d.context->OMSetDepthStencilState(d3d.depth_stencil_state.Get(), 0);
-    }
+    ThrowIfFailed(d3d.device->CreateDepthStencilState(&depth_stencil_desc, d3d.depth_stencil_state.GetAddressOf()));
+    d3d.context->OMSetDepthStencilState(d3d.depth_stencil_state.Get(), 0);
+}
 
-    if (d3d.last_zmode_decal != d3d.zmode_decal) {
-        d3d.last_zmode_decal = d3d.zmode_decal;
+static void gfx_d3d11_refresh_decal() {
+    if (d3d.last_zmode_decal == d3d.zmode_decal) { return; }
+    
+    d3d.last_zmode_decal = d3d.zmode_decal;
 
-        d3d.rasterizer_state.Reset();
+    d3d.rasterizer_state.Reset();
 
-        D3D11_RASTERIZER_DESC rasterizer_desc;
-        ZeroMemory(&rasterizer_desc, sizeof(D3D11_RASTERIZER_DESC));
+    D3D11_RASTERIZER_DESC rasterizer_desc;
+    ZeroMemory(&rasterizer_desc, sizeof(D3D11_RASTERIZER_DESC));
 
-        rasterizer_desc.FillMode = D3D11_FILL_SOLID;
-        rasterizer_desc.CullMode = D3D11_CULL_NONE;
-        rasterizer_desc.FrontCounterClockwise = true;
-        rasterizer_desc.DepthBias = 0;
-        rasterizer_desc.SlopeScaledDepthBias = d3d.zmode_decal ? -2.0f : 0.0f;
-        rasterizer_desc.DepthBiasClamp = 0.0f;
-        rasterizer_desc.DepthClipEnable = true;
-        rasterizer_desc.ScissorEnable = true;
-        rasterizer_desc.MultisampleEnable = false;
-        rasterizer_desc.AntialiasedLineEnable = false;
+    rasterizer_desc.FillMode = D3D11_FILL_SOLID;
+    rasterizer_desc.CullMode = D3D11_CULL_NONE;
+    rasterizer_desc.FrontCounterClockwise = true;
+    rasterizer_desc.DepthBias = 0;
+    rasterizer_desc.SlopeScaledDepthBias = d3d.zmode_decal ? -2.0f : 0.0f;
+    rasterizer_desc.DepthBiasClamp = 0.0f;
+    rasterizer_desc.DepthClipEnable = true;
+    rasterizer_desc.ScissorEnable = true;
+    rasterizer_desc.MultisampleEnable = false;
+    rasterizer_desc.AntialiasedLineEnable = false;
 
-        ThrowIfFailed(d3d.device->CreateRasterizerState(&rasterizer_desc, d3d.rasterizer_state.GetAddressOf()));
-        d3d.context->RSSetState(d3d.rasterizer_state.Get());
-    }
+    ThrowIfFailed(d3d.device->CreateRasterizerState(&rasterizer_desc, d3d.rasterizer_state.GetAddressOf()));
+    d3d.context->RSSetState(d3d.rasterizer_state.Get());
+}
 
-    bool textures_changed = false;
-
-    for (int32_t i = 0; i < 2; i++) {
-        if (d3d.shader_program->used_textures[i]) {
-            if (d3d.last_resource_views[i].Get() != d3d.textures[d3d.current_texture_ids[i]].resource_view.Get()) {
-                d3d.last_resource_views[i] = d3d.textures[d3d.current_texture_ids[i]].resource_view.Get();
-                d3d.context->PSSetShaderResources(i, 1, d3d.textures[d3d.current_texture_ids[i]].resource_view.GetAddressOf());
-
+static void gfx_d3d11_refresh_textures() {
 #if THREE_POINT_FILTERING
-                d3d.per_draw_cb_data.textures[i].width = d3d.textures[d3d.current_texture_ids[i]].width;
-                d3d.per_draw_cb_data.textures[i].height = d3d.textures[d3d.current_texture_ids[i]].height;
-                d3d.per_draw_cb_data.textures[i].linear_filtering = d3d.textures[d3d.current_texture_ids[i]].linear_filtering;
-                textures_changed = true;
+    bool textures_changed = false;
 #endif
 
-                if (d3d.last_sampler_states[i].Get() != d3d.textures[d3d.current_texture_ids[i]].sampler_state.Get()) {
-                    d3d.last_sampler_states[i] = d3d.textures[d3d.current_texture_ids[i]].sampler_state.Get();
-                    d3d.context->PSSetSamplers(i, 1, d3d.textures[d3d.current_texture_ids[i]].sampler_state.GetAddressOf());
-                }
-            }
-        }
+    for (int32_t i = 0; i < 2; i++) {
+        if (!d3d.shader_program->used_textures[i]) { continue; }
+        
+        if (d3d.last_resource_views[i].Get() == d3d.textures[d3d.current_texture_ids[i]].resource_view.Get()) { continue; }
+        
+        d3d.last_resource_views[i] = d3d.textures[d3d.current_texture_ids[i]].resource_view.Get();
+        d3d.context->PSSetShaderResources(i, 1, d3d.textures[d3d.current_texture_ids[i]].resource_view.GetAddressOf());
+
+#if THREE_POINT_FILTERING
+        d3d.per_draw_cb_data.textures[i].width = d3d.textures[d3d.current_texture_ids[i]].width;
+        d3d.per_draw_cb_data.textures[i].height = d3d.textures[d3d.current_texture_ids[i]].height;
+        d3d.per_draw_cb_data.textures[i].linear_filtering = d3d.textures[d3d.current_texture_ids[i]].linear_filtering;
+        textures_changed = true;
+#endif
+        if (d3d.last_sampler_states[i].Get() == d3d.textures[d3d.current_texture_ids[i]].sampler_state.Get()) { continue; }
+        
+        d3d.last_sampler_states[i] = d3d.textures[d3d.current_texture_ids[i]].sampler_state.Get();
+        d3d.context->PSSetSamplers(i, 1, d3d.textures[d3d.current_texture_ids[i]].sampler_state.GetAddressOf());
     }
 
+#if THREE_POINT_FILTERING
     // Set per-draw constant buffer
-
+    
     if (textures_changed) {
         D3D11_MAPPED_SUBRESOURCE ms;
         ZeroMemory(&ms, sizeof(D3D11_MAPPED_SUBRESOURCE));
@@ -637,7 +644,24 @@ static void gfx_d3d11_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t
         memcpy(ms.pData, &d3d.per_draw_cb_data, sizeof(PerDrawCB));
         d3d.context->Unmap(d3d.per_draw_cb.Get(), 0);
     }
+#endif
+}
 
+static void gfx_d3d11_refresh_shader() {
+    if (d3d.last_shader_program == d3d.shader_program) { return; }
+      
+    d3d.last_shader_program = d3d.shader_program;
+    d3d.context->IASetInputLayout(d3d.shader_program->input_layout.Get());
+    d3d.context->VSSetShader(d3d.shader_program->vertex_shader.Get(), 0, 0);
+    d3d.context->PSSetShader(d3d.shader_program->pixel_shader.Get(), 0, 0);
+
+    if (d3d.last_blend_state.Get() == d3d.shader_program->blend_state.Get()) { return; }
+    
+    d3d.last_blend_state = d3d.shader_program->blend_state.Get();
+    d3d.context->OMSetBlendState(d3d.shader_program->blend_state.Get(), 0, 0xFFFFFFFF);
+}
+
+static void gfx_d3d11_update_vertex_data(float buf_vbo[], size_t buf_vbo_len) {
     // Set vertex buffer data
 
     D3D11_MAPPED_SUBRESOURCE ms;
@@ -653,24 +677,20 @@ static void gfx_d3d11_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t
         d3d.last_vertex_buffer_stride = stride;
         d3d.context->IASetVertexBuffers(0, 1, d3d.vertex_buffer.GetAddressOf(), &stride, &offset);
     }
-
-    if (d3d.last_shader_program != d3d.shader_program) {
-        d3d.last_shader_program = d3d.shader_program;
-        d3d.context->IASetInputLayout(d3d.shader_program->input_layout.Get());
-        d3d.context->VSSetShader(d3d.shader_program->vertex_shader.Get(), 0, 0);
-        d3d.context->PSSetShader(d3d.shader_program->pixel_shader.Get(), 0, 0);
-
-        if (d3d.last_blend_state.Get() != d3d.shader_program->blend_state.Get()) {
-            d3d.last_blend_state = d3d.shader_program->blend_state.Get();
-            d3d.context->OMSetBlendState(d3d.shader_program->blend_state.Get(), 0, 0xFFFFFFFF);
-        }
-    }
-
+    
     if (d3d.last_primitive_topology != D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST) {
         d3d.last_primitive_topology = D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
         d3d.context->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     }
+}
 
+static void gfx_d3d11_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t buf_vbo_num_tris) {
+    gfx_d3d11_refresh_depth();
+    gfx_d3d11_refresh_decal();
+    gfx_d3d11_refresh_textures();
+    gfx_d3d11_refresh_shader();
+    
+    gfx_d3d11_update_vertex_data(buf_vbo, buf_vbo_len);
     d3d.context->Draw(buf_vbo_num_tris * 3, 0);
 }
 

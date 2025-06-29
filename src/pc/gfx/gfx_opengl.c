@@ -67,6 +67,7 @@ static struct ShaderProgram shader_program_pool[CC_MAX_SHADERS];
 static uint8_t shader_program_pool_size = 0;
 static uint8_t shader_program_pool_index = 0;
 static GLuint opengl_vbo;
+static size_t opengl_vbo_capi = 0; // Capicacty of the VBO buffer.
 static GLuint opengl_vao;
 
 static int tex_cache_size = 0;
@@ -667,7 +668,15 @@ static void gfx_opengl_set_use_alpha(bool use_alpha) {
 
 static void gfx_opengl_draw_triangles(float buf_vbo[], size_t buf_vbo_len, size_t buf_vbo_num_tris) {
     //printf("flushing %d tris\n", buf_vbo_num_tris);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * buf_vbo_len, buf_vbo, GL_STREAM_DRAW);
+    
+    // If our buffer is already big enough to contain our triangles. Don't reallocate it!
+    // That wastes time on the GPU.
+    if (opengl_vbo_capi < buf_vbo_len) {
+        glBufferData(GL_ARRAY_BUFFER, sizeof(float) * buf_vbo_len, buf_vbo, GL_STREAM_DRAW);
+        opengl_vbo_capi = buf_vbo_len;
+    } else {
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * buf_vbo_len, buf_vbo);
+    }
     glDrawArrays(GL_TRIANGLES, 0, 3 * buf_vbo_num_tris);
 }
 

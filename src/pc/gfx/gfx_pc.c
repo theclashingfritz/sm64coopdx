@@ -108,8 +108,8 @@ struct GfxDimensions gfx_current_dimensions = { 0 };
 static bool dropped_frame = false;
 
 static float buf_vbo[MAX_BUFFERED * (26 * 3)] = { 0.0f }; // 3 vertices in a triangle and 26 floats per vtx
-static size_t buf_vbo_len = 0;
-static size_t buf_vbo_num_tris = 0;
+static size_t buf_vbo_len = 0; // Current length of the VBO buffer.
+static size_t buf_vbo_num_tris = 0; // Number of triangles in the VBO buffer.
 
 static struct GfxWindowManagerAPI *gfx_wapi = NULL;
 static struct GfxRenderingAPI *gfx_rapi = NULL;
@@ -159,11 +159,11 @@ void ext_gfx_run_dl(Gfx* cmd);
 }*/
 
 static void gfx_flush(void) {
-    if (buf_vbo_len > 0) {
-        gfx_rapi->draw_triangles(buf_vbo, buf_vbo_len, buf_vbo_num_tris);
-        buf_vbo_len = 0;
-        buf_vbo_num_tris = 0;
-    }
+    if (buf_vbo_len <= 0) { return; }
+    
+    gfx_rapi->draw_triangles(buf_vbo, buf_vbo_len, buf_vbo_num_tris);
+    buf_vbo_len = 0;
+    buf_vbo_num_tris = 0;
 }
 
 static void combine_mode_update_hash(struct CombineMode* cm) {
@@ -1007,31 +1007,32 @@ static void OPTIMIZE_O3 gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t 
         rendering_state.alpha_blend = cm->use_alpha;
     }
     uint8_t num_inputs;
+    bool uses_textures = false;
     bool used_textures[2];
     gfx_rapi->shader_get_info(prg, &num_inputs, used_textures);
 
     for (int32_t i = 0; i < 2; i++) {
-        if (used_textures[i]) {
-            if (rdp.textures_changed[i]) {
-                gfx_flush();
-                import_texture(i);
-                rdp.textures_changed[i] = false;
-            }
-            bool linear_filter = configFiltering && ((rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT);
-            struct TextureHashmapNode* tex = rendering_state.textures[i];
-            if (tex) {
-                if (linear_filter != tex->linear_filter || rdp.texture_tile.cms != tex->cms || rdp.texture_tile.cmt != rendering_state.textures[i]->cmt) {
-                    gfx_flush();
-                    gfx_rapi->set_sampler_parameters(i, linear_filter, rdp.texture_tile.cms, rdp.texture_tile.cmt);
-                    tex->linear_filter = linear_filter;
-                    tex->cms = rdp.texture_tile.cms;
-                    tex->cmt = rdp.texture_tile.cmt;
-                }
-            }
+        if (!used_textures[i]) { continue; }
+          
+        uses_textures = true;
+        if (rdp.textures_changed[i]) {
+            gfx_flush();
+            import_texture(i);
+            rdp.textures_changed[i] = false;
+        }
+        struct TextureHashmapNode *tex = rendering_state.textures[i];
+        if (!tex) { continue; }
+        
+        bool linear_filter = configFiltering && ((rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT);
+        if (linear_filter != tex->linear_filter || rdp.texture_tile.cms != tex->cms || rdp.texture_tile.cmt != rendering_state.textures[i]->cmt) {
+            gfx_flush();
+            gfx_rapi->set_sampler_parameters(i, linear_filter, rdp.texture_tile.cms, rdp.texture_tile.cmt);
+            tex->linear_filter = linear_filter;
+            tex->cms = rdp.texture_tile.cms;
+            tex->cmt = rdp.texture_tile.cmt;
         }
     }
 
-    bool use_texture = used_textures[0] || used_textures[1];
     uint32_t tex_width = (rdp.texture_tile.lrs - rdp.texture_tile.uls + 4) / 4;
     uint32_t tex_height = (rdp.texture_tile.lrt - rdp.texture_tile.ult + 4) / 4;
 
@@ -1047,7 +1048,7 @@ static void OPTIMIZE_O3 gfx_sp_tri1(uint8_t vtx1_idx, uint8_t vtx2_idx, uint8_t 
         buf_vbo[buf_vbo_len++] = z;
         buf_vbo[buf_vbo_len++] = w;
 
-        if (use_texture) {
+        if (uses_textures) {
             float u = (v_arr[i]->u - rdp.texture_tile.uls * 8) / 32.0f;
             float v = (v_arr[i]->v - rdp.texture_tile.ult * 8) / 32.0f;
             if ((rdp.other_mode_h & (3U << G_MDSFT_TEXTFILT)) != G_TF_POINT) {
