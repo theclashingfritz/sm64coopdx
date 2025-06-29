@@ -964,7 +964,12 @@
 <br />
 
 - lighting_engine.h
+   - [le_set_mode](functions-3.md#le_set_mode)
+   - [le_get_mode](functions-3.md#le_get_mode)
+   - [le_set_tone_mapping](functions-3.md#le_set_tone_mapping)
+   - [le_is_enabled](functions-3.md#le_is_enabled)
    - [le_calculate_lighting_color](functions-3.md#le_calculate_lighting_color)
+   - [le_calculate_lighting_color_with_normal](functions-3.md#le_calculate_lighting_color_with_normal)
    - [le_calculate_lighting_dir](functions-3.md#le_calculate_lighting_dir)
    - [le_add_light](functions-3.md#le_add_light)
    - [le_remove_light](functions-3.md#le_remove_light)
@@ -974,6 +979,7 @@
    - [le_set_light_color](functions-3.md#le_set_light_color)
    - [le_set_light_radius](functions-3.md#le_set_light_radius)
    - [le_set_light_intensity](functions-3.md#le_set_light_intensity)
+   - [le_set_light_use_surface_normals](functions-3.md#le_set_light_use_surface_normals)
 
 <br />
 
@@ -1217,6 +1223,7 @@
    - [mtxf_mul_vec3s](functions-4.md#mtxf_mul_vec3s)
    - [mtxf_rotate_xy](functions-4.md#mtxf_rotate_xy)
    - [mtxf_inverse](functions-4.md#mtxf_inverse)
+   - [mtxf_inverse_non_affine](functions-4.md#mtxf_inverse_non_affine)
    - [get_pos_from_transform_mtx](functions-4.md#get_pos_from_transform_mtx)
 
 <br />
@@ -1843,6 +1850,9 @@
    - [smlua_collision_util_get_current_terrain_collision](functions-6.md#smlua_collision_util_get_current_terrain_collision)
    - [smlua_collision_util_get_level_collision](functions-6.md#smlua_collision_util_get_level_collision)
    - [smlua_collision_util_find_surface_types](functions-6.md#smlua_collision_util_find_surface_types)
+   - [surface_is_quicksand](functions-6.md#surface_is_quicksand)
+   - [surface_is_not_hard](functions-6.md#surface_is_not_hard)
+   - [surface_is_painting_warp](functions-6.md#surface_is_painting_warp)
 
 <br />
 
@@ -2054,7 +2064,9 @@
 
 - smlua_text_utils.h
    - [smlua_text_utils_reset_all](functions-6.md#smlua_text_utils_reset_all)
+   - [smlua_text_utils_dialog_get](functions-6.md#smlua_text_utils_dialog_get)
    - [smlua_text_utils_dialog_replace](functions-6.md#smlua_text_utils_dialog_replace)
+   - [smlua_text_utils_dialog_is_replaced](functions-6.md#smlua_text_utils_dialog_is_replaced)
    - [smlua_text_utils_course_acts_replace](functions-6.md#smlua_text_utils_course_acts_replace)
    - [smlua_text_utils_secret_star_replace](functions-6.md#smlua_text_utils_secret_star_replace)
    - [smlua_text_utils_course_name_replace](functions-6.md#smlua_text_utils_course_name_replace)
@@ -2066,7 +2078,13 @@
    - [smlua_text_utils_act_name_mod_index](functions-6.md#smlua_text_utils_act_name_mod_index)
    - [smlua_text_utils_act_name_reset](functions-6.md#smlua_text_utils_act_name_reset)
    - [smlua_text_utils_castle_secret_stars_replace](functions-6.md#smlua_text_utils_castle_secret_stars_replace)
+   - [smlua_text_utils_castle_secret_stars_get](functions-6.md#smlua_text_utils_castle_secret_stars_get)
+   - [smlua_text_utils_castle_secret_stars_mod_index](functions-6.md#smlua_text_utils_castle_secret_stars_mod_index)
+   - [smlua_text_utils_castle_secret_stars_reset](functions-6.md#smlua_text_utils_castle_secret_stars_reset)
    - [smlua_text_utils_extra_text_replace](functions-6.md#smlua_text_utils_extra_text_replace)
+   - [smlua_text_utils_extra_text_get](functions-6.md#smlua_text_utils_extra_text_get)
+   - [smlua_text_utils_extra_text_mod_index](functions-6.md#smlua_text_utils_extra_text_mod_index)
+   - [smlua_text_utils_extra_text_reset](functions-6.md#smlua_text_utils_extra_text_reset)
    - [smlua_text_utils_get_language](functions-6.md#smlua_text_utils_get_language)
 
 <br />

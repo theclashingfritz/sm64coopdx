@@ -15515,6 +15515,70 @@ int smlua_func_lvl_set_current_level(lua_State* L) {
  // lighting_engine.h //
 ///////////////////////
 
+int smlua_func_le_set_mode(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "le_set_mode", 1, top);
+        return 0;
+    }
+
+    int mode = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "le_set_mode"); return 0; }
+
+    le_set_mode(mode);
+
+    return 1;
+}
+
+int smlua_func_le_get_mode(UNUSED lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 0) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "le_get_mode", 0, top);
+        return 0;
+    }
+
+
+    lua_pushinteger(L, le_get_mode());
+
+    return 1;
+}
+
+int smlua_func_le_set_tone_mapping(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "le_set_tone_mapping", 1, top);
+        return 0;
+    }
+
+    int toneMapping = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "le_set_tone_mapping"); return 0; }
+
+    le_set_tone_mapping(toneMapping);
+
+    return 1;
+}
+
+int smlua_func_le_is_enabled(UNUSED lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 0) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "le_is_enabled", 0, top);
+        return 0;
+    }
+
+
+    lua_pushboolean(L, le_is_enabled());
+
+    return 1;
+}
+
 int smlua_func_le_calculate_lighting_color(lua_State* L) {
     if (L == NULL) { return 0; }
 
@@ -15538,6 +15602,37 @@ int smlua_func_le_calculate_lighting_color(lua_State* L) {
     le_calculate_lighting_color(pos, out, lightIntensityScalar);
 
     smlua_push_color(out, 2);
+
+    return 1;
+}
+
+int smlua_func_le_calculate_lighting_color_with_normal(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 4) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "le_calculate_lighting_color_with_normal", 4, top);
+        return 0;
+    }
+
+
+    Vec3f pos;
+    smlua_get_vec3f(pos, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "le_calculate_lighting_color_with_normal"); return 0; }
+
+    Vec3f normal;
+    smlua_get_vec3f(normal, 2);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 2, "le_calculate_lighting_color_with_normal"); return 0; }
+
+    Color out;
+    smlua_get_color(out, 3);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 3, "le_calculate_lighting_color_with_normal"); return 0; }
+    f32 lightIntensityScalar = smlua_to_number(L, 4);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 4, "le_calculate_lighting_color_with_normal"); return 0; }
+
+    le_calculate_lighting_color_with_normal(pos, normal, out, lightIntensityScalar);
+
+    smlua_push_color(out, 3);
 
     return 1;
 }
@@ -15731,6 +15826,25 @@ int smlua_func_le_set_light_intensity(lua_State* L) {
     if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 2, "le_set_light_intensity"); return 0; }
 
     le_set_light_intensity(id, intensity);
+
+    return 1;
+}
+
+int smlua_func_le_set_light_use_surface_normals(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 2) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "le_set_light_use_surface_normals", 2, top);
+        return 0;
+    }
+
+    s32 id = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "le_set_light_use_surface_normals"); return 0; }
+    bool useSurfaceNormals = smlua_to_boolean(L, 2);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 2, "le_set_light_use_surface_normals"); return 0; }
+
+    le_set_light_use_surface_normals(id, useSurfaceNormals);
 
     return 1;
 }
@@ -19884,6 +19998,31 @@ int smlua_func_mtxf_inverse(lua_State* L) {
     if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 2, "mtxf_inverse"); return 0; }
 
     mtxf_inverse(dest, src);
+
+    smlua_push_mat4(dest, 1);
+
+    return 1;
+}
+
+int smlua_func_mtxf_inverse_non_affine(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 2) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "mtxf_inverse_non_affine", 2, top);
+        return 0;
+    }
+
+
+    Mat4 dest;
+    smlua_get_mat4(dest, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "mtxf_inverse_non_affine"); return 0; }
+
+    Mat4 src;
+    smlua_get_mat4(src, 2);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 2, "mtxf_inverse_non_affine"); return 0; }
+
+    lua_pushboolean(L, mtxf_inverse_non_affine(dest, src));
 
     smlua_push_mat4(dest, 1);
 
@@ -30898,6 +31037,57 @@ int smlua_func_smlua_collision_util_find_surface_types(lua_State* L) {
     return 1;
 }
 
+int smlua_func_surface_is_quicksand(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "surface_is_quicksand", 1, top);
+        return 0;
+    }
+
+    struct Surface* surf = (struct Surface*)smlua_to_cobject(L, 1, LOT_SURFACE);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "surface_is_quicksand"); return 0; }
+
+    lua_pushboolean(L, surface_is_quicksand(surf));
+
+    return 1;
+}
+
+int smlua_func_surface_is_not_hard(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "surface_is_not_hard", 1, top);
+        return 0;
+    }
+
+    struct Surface* surf = (struct Surface*)smlua_to_cobject(L, 1, LOT_SURFACE);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "surface_is_not_hard"); return 0; }
+
+    lua_pushboolean(L, surface_is_not_hard(surf));
+
+    return 1;
+}
+
+int smlua_func_surface_is_painting_warp(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "surface_is_painting_warp", 1, top);
+        return 0;
+    }
+
+    struct Surface* surf = (struct Surface*)smlua_to_cobject(L, 1, LOT_SURFACE);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "surface_is_painting_warp"); return 0; }
+
+    lua_pushboolean(L, surface_is_painting_warp(surf));
+
+    return 1;
+}
+
   ////////////////////////
  // smlua_deprecated.h //
 ////////////////////////
@@ -34271,6 +34461,23 @@ int smlua_func_smlua_text_utils_reset_all(UNUSED lua_State* L) {
     return 1;
 }
 
+int smlua_func_smlua_text_utils_dialog_get(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "smlua_text_utils_dialog_get", 1, top);
+        return 0;
+    }
+
+    int dialogId = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "smlua_text_utils_dialog_get"); return 0; }
+
+    smlua_push_object(L, LOT_DIALOGENTRY, smlua_text_utils_dialog_get(dialogId), NULL);
+
+    return 1;
+}
+
 int smlua_func_smlua_text_utils_dialog_replace(lua_State* L) {
     if (L == NULL) { return 0; }
 
@@ -34294,6 +34501,23 @@ int smlua_func_smlua_text_utils_dialog_replace(lua_State* L) {
     if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 6, "smlua_text_utils_dialog_replace"); return 0; }
 
     smlua_text_utils_dialog_replace(dialogId, unused, linesPerBox, leftOffset, width, str);
+
+    return 1;
+}
+
+int smlua_func_smlua_text_utils_dialog_is_replaced(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "smlua_text_utils_dialog_is_replaced", 1, top);
+        return 0;
+    }
+
+    int dialogId = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "smlua_text_utils_dialog_is_replaced"); return 0; }
+
+    lua_pushboolean(L, smlua_text_utils_dialog_is_replaced(dialogId));
 
     return 1;
 }
@@ -34513,6 +34737,51 @@ int smlua_func_smlua_text_utils_castle_secret_stars_replace(lua_State* L) {
     return 1;
 }
 
+int smlua_func_smlua_text_utils_castle_secret_stars_get(UNUSED lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 0) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "smlua_text_utils_castle_secret_stars_get", 0, top);
+        return 0;
+    }
+
+
+    lua_pushstring(L, smlua_text_utils_castle_secret_stars_get());
+
+    return 1;
+}
+
+int smlua_func_smlua_text_utils_castle_secret_stars_mod_index(UNUSED lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 0) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "smlua_text_utils_castle_secret_stars_mod_index", 0, top);
+        return 0;
+    }
+
+
+    lua_pushinteger(L, smlua_text_utils_castle_secret_stars_mod_index());
+
+    return 1;
+}
+
+int smlua_func_smlua_text_utils_castle_secret_stars_reset(UNUSED lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 0) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "smlua_text_utils_castle_secret_stars_reset", 0, top);
+        return 0;
+    }
+
+
+    smlua_text_utils_castle_secret_stars_reset();
+
+    return 1;
+}
+
 int smlua_func_smlua_text_utils_extra_text_replace(lua_State* L) {
     if (L == NULL) { return 0; }
 
@@ -34528,6 +34797,57 @@ int smlua_func_smlua_text_utils_extra_text_replace(lua_State* L) {
     if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 2, "smlua_text_utils_extra_text_replace"); return 0; }
 
     smlua_text_utils_extra_text_replace(index, text);
+
+    return 1;
+}
+
+int smlua_func_smlua_text_utils_extra_text_get(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "smlua_text_utils_extra_text_get", 1, top);
+        return 0;
+    }
+
+    s16 index = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "smlua_text_utils_extra_text_get"); return 0; }
+
+    lua_pushstring(L, smlua_text_utils_extra_text_get(index));
+
+    return 1;
+}
+
+int smlua_func_smlua_text_utils_extra_text_mod_index(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "smlua_text_utils_extra_text_mod_index", 1, top);
+        return 0;
+    }
+
+    s16 index = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "smlua_text_utils_extra_text_mod_index"); return 0; }
+
+    lua_pushinteger(L, smlua_text_utils_extra_text_mod_index(index));
+
+    return 1;
+}
+
+int smlua_func_smlua_text_utils_extra_text_reset(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "smlua_text_utils_extra_text_reset", 1, top);
+        return 0;
+    }
+
+    s16 index = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "smlua_text_utils_extra_text_reset"); return 0; }
+
+    smlua_text_utils_extra_text_reset(index);
 
     return 1;
 }
@@ -36199,7 +36519,12 @@ void smlua_bind_functions_autogen(void) {
     smlua_bind_function(L, "lvl_set_current_level", smlua_func_lvl_set_current_level);
 
     // lighting_engine.h
+    smlua_bind_function(L, "le_set_mode", smlua_func_le_set_mode);
+    smlua_bind_function(L, "le_get_mode", smlua_func_le_get_mode);
+    smlua_bind_function(L, "le_set_tone_mapping", smlua_func_le_set_tone_mapping);
+    smlua_bind_function(L, "le_is_enabled", smlua_func_le_is_enabled);
     smlua_bind_function(L, "le_calculate_lighting_color", smlua_func_le_calculate_lighting_color);
+    smlua_bind_function(L, "le_calculate_lighting_color_with_normal", smlua_func_le_calculate_lighting_color_with_normal);
     smlua_bind_function(L, "le_calculate_lighting_dir", smlua_func_le_calculate_lighting_dir);
     smlua_bind_function(L, "le_add_light", smlua_func_le_add_light);
     smlua_bind_function(L, "le_remove_light", smlua_func_le_remove_light);
@@ -36209,6 +36534,7 @@ void smlua_bind_functions_autogen(void) {
     smlua_bind_function(L, "le_set_light_color", smlua_func_le_set_light_color);
     smlua_bind_function(L, "le_set_light_radius", smlua_func_le_set_light_radius);
     smlua_bind_function(L, "le_set_light_intensity", smlua_func_le_set_light_intensity);
+    smlua_bind_function(L, "le_set_light_use_surface_normals", smlua_func_le_set_light_use_surface_normals);
 
     // mario.h
     smlua_bind_function(L, "is_anim_at_end", smlua_func_is_anim_at_end);
@@ -36435,6 +36761,7 @@ void smlua_bind_functions_autogen(void) {
     smlua_bind_function(L, "mtxf_mul_vec3s", smlua_func_mtxf_mul_vec3s);
     smlua_bind_function(L, "mtxf_rotate_xy", smlua_func_mtxf_rotate_xy);
     smlua_bind_function(L, "mtxf_inverse", smlua_func_mtxf_inverse);
+    smlua_bind_function(L, "mtxf_inverse_non_affine", smlua_func_mtxf_inverse_non_affine);
     smlua_bind_function(L, "get_pos_from_transform_mtx", smlua_func_get_pos_from_transform_mtx);
 
     // math_util.inl
@@ -37033,6 +37360,9 @@ void smlua_bind_functions_autogen(void) {
     smlua_bind_function(L, "smlua_collision_util_get_current_terrain_collision", smlua_func_smlua_collision_util_get_current_terrain_collision);
     smlua_bind_function(L, "smlua_collision_util_get_level_collision", smlua_func_smlua_collision_util_get_level_collision);
     smlua_bind_function(L, "smlua_collision_util_find_surface_types", smlua_func_smlua_collision_util_find_surface_types);
+    smlua_bind_function(L, "surface_is_quicksand", smlua_func_surface_is_quicksand);
+    smlua_bind_function(L, "surface_is_not_hard", smlua_func_surface_is_not_hard);
+    smlua_bind_function(L, "surface_is_painting_warp", smlua_func_surface_is_painting_warp);
 
     // smlua_deprecated.h
     smlua_bind_function(L, "djui_hud_set_render_behind_hud", smlua_func_djui_hud_set_render_behind_hud);
@@ -37236,7 +37566,9 @@ void smlua_bind_functions_autogen(void) {
 
     // smlua_text_utils.h
     smlua_bind_function(L, "smlua_text_utils_reset_all", smlua_func_smlua_text_utils_reset_all);
+    smlua_bind_function(L, "smlua_text_utils_dialog_get", smlua_func_smlua_text_utils_dialog_get);
     smlua_bind_function(L, "smlua_text_utils_dialog_replace", smlua_func_smlua_text_utils_dialog_replace);
+    smlua_bind_function(L, "smlua_text_utils_dialog_is_replaced", smlua_func_smlua_text_utils_dialog_is_replaced);
     smlua_bind_function(L, "smlua_text_utils_course_acts_replace", smlua_func_smlua_text_utils_course_acts_replace);
     smlua_bind_function(L, "smlua_text_utils_secret_star_replace", smlua_func_smlua_text_utils_secret_star_replace);
     smlua_bind_function(L, "smlua_text_utils_course_name_replace", smlua_func_smlua_text_utils_course_name_replace);
@@ -37248,7 +37580,13 @@ void smlua_bind_functions_autogen(void) {
     smlua_bind_function(L, "smlua_text_utils_act_name_mod_index", smlua_func_smlua_text_utils_act_name_mod_index);
     smlua_bind_function(L, "smlua_text_utils_act_name_reset", smlua_func_smlua_text_utils_act_name_reset);
     smlua_bind_function(L, "smlua_text_utils_castle_secret_stars_replace", smlua_func_smlua_text_utils_castle_secret_stars_replace);
+    smlua_bind_function(L, "smlua_text_utils_castle_secret_stars_get", smlua_func_smlua_text_utils_castle_secret_stars_get);
+    smlua_bind_function(L, "smlua_text_utils_castle_secret_stars_mod_index", smlua_func_smlua_text_utils_castle_secret_stars_mod_index);
+    smlua_bind_function(L, "smlua_text_utils_castle_secret_stars_reset", smlua_func_smlua_text_utils_castle_secret_stars_reset);
     smlua_bind_function(L, "smlua_text_utils_extra_text_replace", smlua_func_smlua_text_utils_extra_text_replace);
+    smlua_bind_function(L, "smlua_text_utils_extra_text_get", smlua_func_smlua_text_utils_extra_text_get);
+    smlua_bind_function(L, "smlua_text_utils_extra_text_mod_index", smlua_func_smlua_text_utils_extra_text_mod_index);
+    smlua_bind_function(L, "smlua_text_utils_extra_text_reset", smlua_func_smlua_text_utils_extra_text_reset);
     smlua_bind_function(L, "smlua_text_utils_get_language", smlua_func_smlua_text_utils_get_language);
 
     // sound_init.h

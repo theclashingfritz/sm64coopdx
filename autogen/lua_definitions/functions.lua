@@ -5022,11 +5022,44 @@ function lvl_set_current_level(param, levelNum)
     -- ...
 end
 
+--- @param mode LEMode
+--- Sets the lighting engine mode to `mode`
+function le_set_mode(mode)
+    -- ...
+end
+
+--- @return LEMode
+--- Gets the lighting engine mode
+function le_get_mode()
+    -- ...
+end
+
+--- @param toneMapping LEToneMapping
+--- Sets the lighting engine's tone mapping mode to `toneMapping`
+function le_set_tone_mapping(toneMapping)
+    -- ...
+end
+
+--- @return boolean
+--- Gets whether the lighting engine has been enabled or not. It becomes enabled once a light is added.
+function le_is_enabled()
+    -- ...
+end
+
 --- @param pos Vec3f
 --- @param out Color
 --- @param lightIntensityScalar number
 --- Calculates the lighting with `lightIntensityScalar` at a position and outputs the color in `out`
 function le_calculate_lighting_color(pos, out, lightIntensityScalar)
+    -- ...
+end
+
+--- @param pos Vec3f
+--- @param normal Vec3f
+--- @param out Color
+--- @param lightIntensityScalar number
+--- Calculates the lighting with `lightIntensityScalar` at a position and with a normal and outputs the color in `out`
+function le_calculate_lighting_color_with_normal(pos, normal, out, lightIntensityScalar)
     -- ...
 end
 
@@ -5100,6 +5133,13 @@ end
 --- @param intensity number
 --- Sets a lighting engine point light's `intensity`
 function le_set_light_intensity(id, intensity)
+    -- ...
+end
+
+--- @param id integer
+--- @param useSurfaceNormals boolean
+--- Sets whether a lighting engine point light will use a surface's normals to determine its brightness with `useSurfaceNormals`
+function le_set_light_use_surface_normals(id, useSurfaceNormals)
     -- ...
 end
 
@@ -6589,8 +6629,16 @@ end
 
 --- @param dest Mat4
 --- @param src Mat4
---- Inverts the 4x4 floating-point matrix `src` and stores the inverse in `dest`. Applying the inverse transformation undoes whatever `src` did, returning points back to their original coordinate space
+--- Inverts the 4x4 floating-point matrix `src` and stores the inverse in `dest`. Applying the inverse transformation undoes whatever `src` did, returning points back to their original coordinate space. The `src` matrix *must* be affine!
 function mtxf_inverse(dest, src)
+    -- ...
+end
+
+--- @param dest Mat4
+--- @param src Mat4
+--- @return boolean
+--- Inverts the 4x4 floating-point matrix `src` and stores the inverse in `dest`. Applying the inverse transformation undoes whatever `src` did, returning points back to their original coordinate space. Returns `false` if the inversion failed.
+function mtxf_inverse_non_affine(dest, src)
     -- ...
 end
 
@@ -10223,6 +10271,27 @@ function smlua_collision_util_find_surface_types(data)
     -- ...
 end
 
+--- @param surf Surface
+--- @return boolean
+--- Checks if the surface is quicksand
+function surface_is_quicksand(surf)
+    -- ...
+end
+
+--- @param surf Surface
+--- @return boolean
+--- Checks if the surface is not a hard surface
+function surface_is_not_hard(surf)
+    -- ...
+end
+
+--- @param surf Surface
+--- @return boolean
+--- Checks if the surface is a painting warp
+function surface_is_painting_warp(surf)
+    -- ...
+end
+
 --- @param fov number
 --- Sets the override FOV
 function set_override_fov(fov)
@@ -11501,6 +11570,13 @@ function smlua_text_utils_reset_all()
 end
 
 --- @param dialogId DialogId
+--- @return DialogEntry
+--- Gets the DialogEntry struct for the given `dialogId`
+function smlua_text_utils_dialog_get(dialogId)
+    -- ...
+end
+
+--- @param dialogId DialogId
 --- @param unused integer
 --- @param linesPerBox integer
 --- @param leftOffset integer
@@ -11508,6 +11584,13 @@ end
 --- @param str string
 --- Replaces `dialogId` with a custom one
 function smlua_text_utils_dialog_replace(dialogId, unused, linesPerBox, leftOffset, width, str)
+    -- ...
+end
+
+--- @param dialogId DialogId
+--- @return boolean
+--- Returns whether the dialog with the given ID has been replaced
+function smlua_text_utils_dialog_is_replaced(dialogId)
     -- ...
 end
 
@@ -11595,10 +11678,47 @@ function smlua_text_utils_castle_secret_stars_replace(name)
     -- ...
 end
 
+--- @return string
+--- Gets the castle secret stars text
+function smlua_text_utils_castle_secret_stars_get()
+    -- ...
+end
+
+--- @return integer
+--- Gets the index of the mod that replaced the castle secret stars text
+function smlua_text_utils_castle_secret_stars_mod_index()
+    -- ...
+end
+
+--- Resets the castle secret stars text
+function smlua_text_utils_castle_secret_stars_reset()
+    -- ...
+end
+
 --- @param index integer
 --- @param text string
 --- Replace extra text (e.g. one of the castle's secret stars) with `text`
 function smlua_text_utils_extra_text_replace(index, text)
+    -- ...
+end
+
+--- @param index integer
+--- @return string
+--- Gets the extra text at `index`
+function smlua_text_utils_extra_text_get(index)
+    -- ...
+end
+
+--- @param index integer
+--- @return integer
+--- Gets the index of the mod that replaced the extra text at `index`
+function smlua_text_utils_extra_text_mod_index(index)
+    -- ...
+end
+
+--- @param index integer
+--- Resets the extra text at `index`
+function smlua_text_utils_extra_text_reset(index)
     -- ...
 end
 

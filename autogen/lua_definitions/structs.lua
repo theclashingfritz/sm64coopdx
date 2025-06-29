@@ -592,6 +592,13 @@
 --- @field public second integer
 --- @field public year integer
 
+--- @class DialogEntry
+--- @field public leftOffset integer
+--- @field public linesPerBox integer
+--- @field public text string
+--- @field public unused integer
+--- @field public width integer
+
 --- @class DisplayListNode
 --- @field public displayList Pointer_Gfx
 --- @field public next DisplayListNode
@@ -1068,6 +1075,7 @@
 
 --- @class LevelValues
 --- @field public bubbleOnDeathBarrierInCapStages integer
+--- @field public ceilNormalMaxY number
 --- @field public cellHeightLimit integer
 --- @field public coinsRequiredForCoinStar integer
 --- @field public disableActs integer
@@ -1087,6 +1095,7 @@
 --- @field public floorLowerLimit integer
 --- @field public floorLowerLimitMisc integer
 --- @field public floorLowerLimitShadow integer
+--- @field public floorNormalMinY number
 --- @field public hudCapTimer integer
 --- @field public hudRedCoinsRadar integer
 --- @field public hudSecretsRadar integer
@@ -1275,6 +1284,8 @@
 --- @class ModFile
 --- @field public cachedPath string
 --- @field public dataHash integer[]
+--- @field public isLoadedLuaModule boolean
+--- @field public modifiedTimestamp integer
 --- @field public relativePath string
 --- @field public wroteBytes integer
 
