@@ -72,7 +72,13 @@ gGlobalSoundSource = create_read_only_table({ x = 0, y = 0, z = 0 })
 --- @return number
 function SOUND_ARG_LOAD(bank, soundID, priority, flags)
     if flags == nil then flags = 0 end
-    return (bank << 28) | (soundID << 16) | (priority << 8) | flags | SOUND_STATUS_WAITING
+    return math.s32(
+        ((bank << SOUNDARGS_SHIFT_BANK) & SOUNDARGS_MASK_BANK) |
+        ((soundID << SOUNDARGS_SHIFT_SOUNDID) & SOUNDARGS_MASK_SOUNDID) |
+        ((priority << SOUNDARGS_SHIFT_PRIORITY) & SOUNDARGS_MASK_PRIORITY) |
+        (flags & SOUNDARGS_MASK_BITFLAGS) |
+        SOUND_STATUS_WAITING
+    )
 end
 
 -------------
@@ -3611,6 +3617,9 @@ HUD_DISPLAY_DEFAULT               = HUD_DISPLAY_FLAG_LIVES | HUD_DISPLAY_FLAG_CO
 --- | `HUD_DISPLAY_NONE`
 --- | `HUD_DISPLAY_DEFAULT`
 
+--- @type integer
+LE_MAX_LIGHTS = 256
+
 LE_MODE_AFFECT_ALL_SHADED_AND_COLORED = 0 --- @type LEMode
 LE_MODE_AFFECT_ALL_SHADED             = 1 --- @type LEMode
 LE_MODE_AFFECT_ONLY_GEOMETRY_MODE     = 2 --- @type LEMode
@@ -4532,6 +4541,50 @@ GRAB_POS_BOWSER    = 3 --- @type MarioGrabPosGSCId
 --- | `GRAB_POS_LIGHT_OBJ`
 --- | `GRAB_POS_HEAVY_OBJ`
 --- | `GRAB_POS_BOWSER`
+
+--- @type integer
+MOD_FS_MAX_SIZE = 0x1000000
+
+--- @type integer
+MOD_FS_MAX_FILES = 0x100
+
+--- @type integer
+MOD_FS_MAX_PATH = 0x100
+
+INT_TYPE_U8  = 0 --- @type ModFsFileIntType
+INT_TYPE_U16 = 1 --- @type ModFsFileIntType
+INT_TYPE_U32 = 2 --- @type ModFsFileIntType
+INT_TYPE_U64 = 3 --- @type ModFsFileIntType
+INT_TYPE_S8  = 4 --- @type ModFsFileIntType
+INT_TYPE_S16 = 5 --- @type ModFsFileIntType
+INT_TYPE_S32 = 6 --- @type ModFsFileIntType
+INT_TYPE_S64 = 7 --- @type ModFsFileIntType
+
+--- @alias ModFsFileIntType
+--- | `INT_TYPE_U8`
+--- | `INT_TYPE_U16`
+--- | `INT_TYPE_U32`
+--- | `INT_TYPE_U64`
+--- | `INT_TYPE_S8`
+--- | `INT_TYPE_S16`
+--- | `INT_TYPE_S32`
+--- | `INT_TYPE_S64`
+
+FLOAT_TYPE_F32 = 0 --- @type ModFsFileFloatType
+FLOAT_TYPE_F64 = 1 --- @type ModFsFileFloatType
+
+--- @alias ModFsFileFloatType
+--- | `FLOAT_TYPE_F32`
+--- | `FLOAT_TYPE_F64`
+
+FILE_SEEK_SET = 0 --- @type ModFsFileSeek
+FILE_SEEK_CUR = 1 --- @type ModFsFileSeek
+FILE_SEEK_END = 2 --- @type ModFsFileSeek
+
+--- @alias ModFsFileSeek
+--- | `FILE_SEEK_SET`
+--- | `FILE_SEEK_CUR`
+--- | `FILE_SEEK_END`
 
 --- @type integer
 MAX_KEYS = 4096
@@ -8046,7 +8099,8 @@ HOOK_ON_INSTANT_WARP                        = 55 --- @type LuaHookedEventType
 HOOK_MARIO_OVERRIDE_FLOOR_CLASS             = 56 --- @type LuaHookedEventType
 HOOK_ON_ADD_SURFACE                         = 57 --- @type LuaHookedEventType
 HOOK_ON_CLEAR_AREAS                         = 58 --- @type LuaHookedEventType
-HOOK_MAX                                    = 59 --- @type LuaHookedEventType
+HOOK_ON_PACKET_BYTESTRING_RECEIVE           = 59 --- @type LuaHookedEventType
+HOOK_MAX                                    = 60 --- @type LuaHookedEventType
 
 --- @alias LuaHookedEventType
 --- | `HOOK_UPDATE`
@@ -8108,6 +8162,7 @@ HOOK_MAX                                    = 59 --- @type LuaHookedEventType
 --- | `HOOK_MARIO_OVERRIDE_FLOOR_CLASS`
 --- | `HOOK_ON_ADD_SURFACE`
 --- | `HOOK_ON_CLEAR_AREAS`
+--- | `HOOK_ON_PACKET_BYTESTRING_RECEIVE`
 --- | `HOOK_MAX`
 
 HUD_DISPLAY_LIVES         = 0 --- @type HudDisplayValue
@@ -8932,6 +8987,9 @@ SOUNDARGS_MASK_PRIORITY = 0x0000FF00
 
 --- @type integer
 SOUNDARGS_MASK_STATUS = 0x0000000F
+
+--- @type integer
+SOUNDARGS_MASK_BITFLAGS = 0x0F0000F0
 
 --- @type integer
 SOUNDARGS_SHIFT_BANK = 28
@@ -11061,16 +11119,16 @@ COOP_OBJ_FLAG_NON_SYNC = (1 << 2)
 COOP_OBJ_FLAG_INITIALIZED = (1 << 3)
 
 --- @type string
-SM64COOPDX_VERSION = "v1.3.2"
+SM64COOPDX_VERSION = "v1.4"
 
 --- @type string
 VERSION_TEXT = "v"
 
 --- @type integer
-VERSION_NUMBER = 40
+VERSION_NUMBER = 41
 
 --- @type integer
-MINOR_VERSION_NUMBER = 2
+MINOR_VERSION_NUMBER = 0
 
 --- @type integer
 MAX_VERSION_LENGTH = 128

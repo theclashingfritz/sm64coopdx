@@ -1,14 +1,22 @@
 #include "lighting_engine.h"
 #include "math_util.h"
-#include "surface_collision.h"
-#include "pc/debuglog.h"
-#include "data/dynos_cmap.cpp.h"
 
-#define LE_MAX_LIGHTS 256
+struct LELight
+{
+    f32 posX;
+    f32 posY;
+    f32 posZ;
+    u8 colorR;
+    u8 colorG;
+    u8 colorB;
+    f32 radius;
+    f32 intensity;
+    bool added;
+    bool useSurfaceNormals;
+};
 
 Color gLEAmbientColor = { 127, 127, 127 };
-static void* sLights = NULL;
-static s32 sLightID = 0;
+static struct LELight sLights[LE_MAX_LIGHTS] = { 0 };
 static enum LEMode sMode = LE_MODE_AFFECT_ALL_SHADED_AND_COLORED;
 static enum LEToneMapping sToneMapping = LE_TONE_MAPPING_WEIGHTED;
 static bool sEnabled = false;
@@ -17,6 +25,12 @@ static inline void color_set(Color color, u8 r, u8 g, u8 b) {
     color[0] = r;
     color[1] = g;
     color[2] = b;
+}
+
+static inline void color_copy(Color dest, Color src) {
+    dest[0] = src[0];
+    dest[1] = src[1];
+    dest[2] = src[2];
 }
 
 bool le_is_enabled(void) {
@@ -38,44 +52,53 @@ void le_set_tone_mapping(enum LEToneMapping toneMapping) {
     sToneMapping = toneMapping;
 }
 
-static inline void le_tone_map_total_weighted(OUT Color out, Color in_ambient, Vec3f in_color, float weight) {
-    out[0] = clamp((in_ambient[0] + in_color[0]) / weight, 0, 255);
-    out[1] = clamp((in_ambient[1] + in_color[1]) / weight, 0, 255);
-    out[2] = clamp((in_ambient[2] + in_color[2]) / weight, 0, 255);
+void le_get_ambient_color(OUT Color out) {
+    color_copy(out, gLEAmbientColor);
 }
 
-static inline void le_tone_map_weighted(OUT Color out, Color in_ambient, Vec3f in_color, float weight) {
-    out[0] = clamp(in_ambient[0] + (in_color[0] / weight), 0, 255);
-    out[1] = clamp(in_ambient[1] + (in_color[1] / weight), 0, 255);
-    out[2] = clamp(in_ambient[2] + (in_color[2] / weight), 0, 255);
+void le_set_ambient_color(u8 r, u8 g, u8 b) {
+    color_set(gLEAmbientColor, r, g, b);
+    sEnabled = true;
 }
 
-static inline void le_tone_map_clamp(OUT Color out, Color in_ambient, Vec3f in_color) {
-    out[0] = clamp(in_ambient[0] + in_color[0], 0, 255);
-    out[1] = clamp(in_ambient[1] + in_color[1], 0, 255);
-    out[2] = clamp(in_ambient[2] + in_color[2], 0, 255);
+static inline void le_tone_map_total_weighted(Color out, Color inAmbient, Vec3f inColor, float weight) {
+    out[0] = clamp((inAmbient[0] + inColor[0]) / weight, 0, 255);
+    out[1] = clamp((inAmbient[1] + inColor[1]) / weight, 0, 255);
+    out[2] = clamp((inAmbient[2] + inColor[2]) / weight, 0, 255);
 }
 
-static inline void le_tone_map_reinhard(OUT Color out, Color in_ambient, Vec3f in_color) {
-    in_color[0] += in_ambient[0];
-    in_color[1] += in_ambient[1];
-    in_color[2] += in_ambient[2];
-
-    out[0] = clamp((in_color[0] / (in_color[0] + 255.0f)) * 255.0f, 0, 255);
-    out[1] = clamp((in_color[1] / (in_color[1] + 255.0f)) * 255.0f, 0, 255);
-    out[2] = clamp((in_color[2] / (in_color[2] + 255.0f)) * 255.0f, 0, 255);
+static inline void le_tone_map_weighted(Color out, Color inAmbient, Vec3f inColor, float weight) {
+    out[0] = clamp(inAmbient[0] + (inColor[0] / weight), 0, 255);
+    out[1] = clamp(inAmbient[1] + (inColor[1] / weight), 0, 255);
+    out[2] = clamp(inAmbient[2] + (inColor[2] / weight), 0, 255);
 }
 
-static inline void le_tone_map(OUT Color out, Color in_ambient, Vec3f in_color, float weight) {
+static inline void le_tone_map_clamp(Color out, Color inAmbient, Vec3f inColor) {
+    out[0] = clamp(inAmbient[0] + inColor[0], 0, 255);
+    out[1] = clamp(inAmbient[1] + inColor[1], 0, 255);
+    out[2] = clamp(inAmbient[2] + inColor[2], 0, 255);
+}
+
+static inline void le_tone_map_reinhard(Color out, Color inAmbient, Vec3f inColor) {
+    inColor[0] += inAmbient[0];
+    inColor[1] += inAmbient[1];
+    inColor[2] += inAmbient[2];
+
+    out[0] = clamp((inColor[0] / (inColor[0] + 255.0f)) * 255.0f, 0, 255);
+    out[1] = clamp((inColor[1] / (inColor[1] + 255.0f)) * 255.0f, 0, 255);
+    out[2] = clamp((inColor[2] / (inColor[2] + 255.0f)) * 255.0f, 0, 255);
+}
+
+static inline void le_tone_map(Color out, Color inAmbient, Vec3f inColor, float weight) {
     switch (sToneMapping) {
-        case LE_TONE_MAPPING_TOTAL_WEIGHTED: le_tone_map_total_weighted(out, in_ambient, in_color, weight); break;
-        case LE_TONE_MAPPING_WEIGHTED:       le_tone_map_weighted(out, in_ambient, in_color, weight);       break;
-        case LE_TONE_MAPPING_CLAMP:          le_tone_map_clamp(out, in_ambient, in_color);                  break;
-        case LE_TONE_MAPPING_REINHARD:       le_tone_map_reinhard(out, in_ambient, in_color);               break;
+        case LE_TONE_MAPPING_TOTAL_WEIGHTED: le_tone_map_total_weighted(out, inAmbient, inColor, weight); break;
+        case LE_TONE_MAPPING_WEIGHTED:       le_tone_map_weighted(out, inAmbient, inColor, weight);       break;
+        case LE_TONE_MAPPING_CLAMP:          le_tone_map_clamp(out, inAmbient, inColor);                  break;
+        case LE_TONE_MAPPING_REINHARD:       le_tone_map_reinhard(out, inAmbient, inColor);               break;
     }
 }
 
-static inline void le_calculate_light_contribution(struct LELight* light, Vec3f pos, Vec3f normal, f32 lightIntensityScalar, OUT Vec3f out_color, OUT f32* weight) {
+static inline void le_calculate_light_contribution(struct LELight* light, Vec3f pos, Vec3f normal, f32 lightIntensityScalar, Vec3f out_color, f32* weight) {
     // skip 'inactive' lights
     if (light->intensity <= 0 || light->radius <= 0) { return; }
 
@@ -115,16 +138,17 @@ static inline void le_calculate_light_contribution(struct LELight* light, Vec3f 
     *weight += brightness;
 }
 
-void le_calculate_vertex_lighting(Vtx_t* v, Vec3f pos, OUT Color out) {
-    if (sLights == NULL) { return; }
-
+void le_calculate_vertex_lighting(Vtx_t* v, Vec3f pos, Color out) {
     // clear color
     Vec3f color = { 0 };
 
     // accumulate lighting
     f32 weight = 1.0f;
-    for (struct LELight* light = hmap_begin(sLights); light != NULL; light = hmap_next(sLights)) {
-        le_calculate_light_contribution(light, pos, NULL, 1, color, &weight);
+    for (s16 i = 0; i < LE_MAX_LIGHTS; i++) {
+        struct LELight* light = &sLights[i];
+        if (!light->added) { continue; }
+
+        le_calculate_light_contribution(light, pos, NULL, 1.0f, color, &weight);
     }
 
     // tone map and output
@@ -136,15 +160,16 @@ void le_calculate_vertex_lighting(Vtx_t* v, Vec3f pos, OUT Color out) {
     le_tone_map(out, vtxAmbient, color, weight);
 }
 
-void le_calculate_lighting_color(Vec3f pos, OUT Color out, f32 lightIntensityScalar) {
-    if (sLights == NULL) { return; }
-
+void le_calculate_lighting_color(Vec3f pos, Color out, f32 lightIntensityScalar) {
     // clear color
     Vec3f color = { 0 };
 
     // accumulate lighting
     f32 weight = 1.0f;
-    for (struct LELight* light = hmap_begin(sLights); light != NULL; light = hmap_next(sLights)) {
+    for (s16 i = 0; i < LE_MAX_LIGHTS; i++) {
+        struct LELight* light = &sLights[i];
+        if (!light->added) { continue; }
+
         le_calculate_light_contribution(light, pos, NULL, lightIntensityScalar, color, &weight);
     }
 
@@ -152,9 +177,7 @@ void le_calculate_lighting_color(Vec3f pos, OUT Color out, f32 lightIntensitySca
     le_tone_map(out, gLEAmbientColor, color, weight);
 }
 
-void le_calculate_lighting_color_with_normal(Vec3f pos, Vec3f normal, OUT Color out, f32 lightIntensityScalar) {
-    if (sLights == NULL) { return; }
-
+void le_calculate_lighting_color_with_normal(Vec3f pos, Vec3f normal, Color out, f32 lightIntensityScalar) {
     // normalize normal
     if (normal) { vec3f_normalize(normal); }
 
@@ -163,7 +186,10 @@ void le_calculate_lighting_color_with_normal(Vec3f pos, Vec3f normal, OUT Color 
 
     // accumulate lighting
     f32 weight = 1.0f;
-    for (struct LELight* light = hmap_begin(sLights); light != NULL; light = hmap_next(sLights)) {
+    for (s16 i = 0; i < LE_MAX_LIGHTS; i++) {
+        struct LELight* light = &sLights[i];
+        if (!light->added) { continue; }
+
         le_calculate_light_contribution(light, pos, normal, lightIntensityScalar, color, &weight);
     }
 
@@ -171,12 +197,14 @@ void le_calculate_lighting_color_with_normal(Vec3f pos, Vec3f normal, OUT Color 
     le_tone_map(out, gLEAmbientColor, color, weight);
 }
 
-void le_calculate_lighting_dir(Vec3f pos, OUT Vec3f out) {
-    if (sLights == NULL) { return; }
-
+void le_calculate_lighting_dir(Vec3f pos, Vec3f out) {
     Vec3f lightingDir = { 0, 0, 0 };
-    s32 count = 1;
-    for (struct LELight* light = hmap_begin(sLights); light != NULL; light = hmap_next(sLights)) {
+    s16 count = 1;
+
+    for (s16 i = 0; i < LE_MAX_LIGHTS; i++) {
+        struct LELight* light = &sLights[i];
+        if (!light->added) { continue; }
+
         f32 diffX = light->posX - pos[0];
         f32 diffY = light->posY - pos[1];
         f32 diffZ = light->posZ - pos[2];
@@ -205,110 +233,150 @@ void le_calculate_lighting_dir(Vec3f pos, OUT Vec3f out) {
     vec3f_normalize(out);
 }
 
-s32 le_add_light(f32 x, f32 y, f32 z, u8 r, u8 g, u8 b, f32 radius, f32 intensity) {
-    if (sLights == NULL) {
-        sLights = hmap_create(true);
-    } else if (hmap_len(sLights) >= LE_MAX_LIGHTS) {
-        return 0;
+s16 le_add_light(f32 x, f32 y, f32 z, u8 r, u8 g, u8 b, f32 radius, f32 intensity) {
+    struct LELight* newLight = NULL;
+    s16 lightID = -1;
+
+    for (s16 i = 0; i < LE_MAX_LIGHTS; i++) {
+        struct LELight* light = &sLights[i];
+        if (!light->added) {
+            newLight = light;
+            lightID = i;
+            break;
+        }
+    }
+    if (newLight == NULL) { return -1; }
+
+    newLight->posX = x;
+    newLight->posY = y;
+    newLight->posZ = z;
+    newLight->colorR = r;
+    newLight->colorG = g;
+    newLight->colorB = b;
+    newLight->radius = radius;
+    newLight->intensity = intensity;
+    newLight->added = true;
+    newLight->useSurfaceNormals = true;
+
+    sEnabled = true;
+    return lightID;
+}
+
+void le_remove_light(s16 id) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return; }
+
+    memset(&sLights[id], 0, sizeof(struct LELight));
+}
+
+s16 le_get_light_count(void) {
+    s16 count = 0;
+    for (s16 i = 0; i < LE_MAX_LIGHTS; i++) {
+        if (sLights[i].added) { count++; }
     }
 
-    struct LELight* light = calloc(1, sizeof(struct LELight));
-    light->posX = x;
-    light->posY = y;
-    light->posZ = z;
-    light->colorR = r;
-    light->colorG = g;
-    light->colorB = b;
-    light->radius = radius;
-    light->intensity = intensity;
-    light->useSurfaceNormals = true;
-    hmap_put(sLights, ++sLightID, light);
-
-    sEnabled = true;
-    return sLightID;
+    return count;
 }
 
-void le_remove_light(s32 id) {
-    if (sLights == NULL || id <= 0) { return; }
-
-    free(hmap_get(sLights, id));
-    hmap_del(sLights, id);
+bool le_light_exists(s16 id) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return false; }
+    return sLights[id].added;
 }
 
-s32 le_get_light_count(void) {
-    if (sLights == NULL) { return 0; }
-    return hmap_len(sLights);
+void le_get_light_pos(s16 id, OUT Vec3f out) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return; }
+
+    struct LELight* light = &sLights[id];
+    if (!light->added) { return; }
+    vec3f_set(out, light->posX, light->posY, light->posZ);
 }
 
-void le_set_ambient_color(u8 r, u8 g, u8 b) {
-    color_set(gLEAmbientColor, r, g, b);
-    sEnabled = true;
-}
+void le_set_light_pos(s16 id, f32 x, f32 y, f32 z) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return; }
 
-void le_set_light_pos(s32 id, f32 x, f32 y, f32 z) {
-    if (sLights == NULL || id <= 0) { return; }
-
-    struct LELight* light = hmap_get(sLights, id);
-    if (light == NULL) { return; }
+    struct LELight* light = &sLights[id];
+    if (!light->added) { return; }
     light->posX = x;
     light->posY = y;
     light->posZ = z;
 }
 
-void le_set_light_color(s32 id, u8 r, u8 g, u8 b) {
-    if (sLights == NULL || id <= 0) { return; }
+void le_get_light_color(s16 id, OUT Color out) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return; }
 
-    struct LELight* light = hmap_get(sLights, id);
-    if (light == NULL) { return; }
+    struct LELight* light = &sLights[id];
+    if (!light->added) { return; }
+    color_set(out, light->colorR, light->colorG, light->colorB);
+}
+
+void le_set_light_color(s16 id, u8 r, u8 g, u8 b) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return; }
+
+    struct LELight* light = &sLights[id];
+    if (!light->added) { return; }
     light->colorR = r;
     light->colorG = g;
     light->colorB = b;
 }
 
-void le_set_light_radius(s32 id, f32 radius) {
-    if (sLights == NULL || id <= 0) { return; }
+f32 le_get_light_radius(s16 id) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return 0.0f; }
 
-    struct LELight* light = hmap_get(sLights, id);
-    if (light == NULL) { return; }
+    struct LELight* light = &sLights[id];
+    if (!light->added) { return 0.0f; }
+    return light->radius;
+}
+
+void le_set_light_radius(s16 id, f32 radius) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return; }
+
+    struct LELight* light = &sLights[id];
+    if (!light->added) { return; }
     light->radius = radius;
 }
 
-void le_set_light_intensity(s32 id, f32 intensity) {
-    if (sLights == NULL || id <= 0) { return; }
+f32 le_get_light_intensity(s16 id) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return 0.0f; }
 
-    struct LELight* light = hmap_get(sLights, id);
-    if (light == NULL) { return; }
+    struct LELight* light = &sLights[id];
+    if (!light->added) { return 0.0f; }
+    return light->intensity;
+}
+
+void le_set_light_intensity(s16 id, f32 intensity) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return; }
+
+    struct LELight* light = &sLights[id];
+    if (!light->added) { return; }
     light->intensity = intensity;
 }
 
-void le_set_light_use_surface_normals(s32 id, bool useSurfaceNormals) {
-    if (sLights == NULL || id <= 0) { return; }
+bool le_get_light_use_surface_normals(s16 id) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return false; }
 
-    struct LELight* light = hmap_get(sLights, id);
-    if (light == NULL) { return; }
+    struct LELight* light = &sLights[id];
+    if (!light->added) { return false; }
+    return light->useSurfaceNormals;
+}
+
+void le_set_light_use_surface_normals(s16 id, bool useSurfaceNormals) {
+    if (id < 0 || id >= LE_MAX_LIGHTS) { return; }
+
+    struct LELight* light = &sLights[id];
+    if (!light->added) { return; }
     light->useSurfaceNormals = useSurfaceNormals;
 }
 
 void le_clear(void) {
-    if (sLights == NULL) { return; }
+    memset(&sLights, 0, sizeof(struct LELight) * LE_MAX_LIGHTS);
 
-    for (struct LELight* light = hmap_begin(sLights); light != NULL; light = hmap_next(sLights)) {
-        free(light);
-    }
-    hmap_clear(sLights);
-    sLightID = 0;
     gLEAmbientColor[0] = 127;
     gLEAmbientColor[1] = 127;
     gLEAmbientColor[2] = 127;
 }
 
 void le_shutdown(void) {
-    if (sLights == NULL) { return; }
-
     sEnabled = false;
     sMode = LE_MODE_AFFECT_ALL_SHADED_AND_COLORED;
     sToneMapping = LE_TONE_MAPPING_WEIGHTED;
     le_clear();
-    hmap_destroy(sLights);
-    sLights = NULL;
 }
