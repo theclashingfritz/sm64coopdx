@@ -5,17 +5,17 @@
 #include "gfx_direct3d_common.h"
 #include "gfx_cc.h"
 
-static void append_str(char *buf, size_t *len, const char *str) {
+static OPTIMIZE_O3 INLINE void append_str(char *buf, size_t *len, const char *str) {
     while (*str != '\0') buf[(*len)++] = *str++;
 }
 
-static void append_line(char *buf, size_t *len, const char *str) {
-    while (*str != '\0') buf[(*len)++] = *str++;
+static OPTIMIZE_O3 INLINE void append_line(char *buf, size_t *len, const char *str) {
+    append_str(buf, len, str);
     buf[(*len)++] = '\r';
     buf[(*len)++] = '\n';
 }
 
-static const char *shader_item_to_str(int32_t item, bool with_alpha, bool only_alpha, bool inputs_have_alpha, bool hint_single_element) {
+static OPTIMIZE_O3 const char *shader_item_to_str(int32_t item, bool with_alpha, bool only_alpha, bool inputs_have_alpha, bool hint_single_element) {
     if (!only_alpha) {
         switch (item) {
             default:
@@ -95,7 +95,7 @@ static const char *shader_item_to_str(int32_t item, bool with_alpha, bool only_a
     }
 }
 
-static void append_formula(char *buf, size_t *len, const uint8_t* c, bool do_single, bool do_multiply, bool do_mix, bool with_alpha, bool only_alpha, bool opt_alpha) {
+static OPTIMIZE_O3 void append_formula(char *buf, size_t *len, const uint8_t* c, bool do_single, bool do_multiply, bool do_mix, bool with_alpha, bool only_alpha, bool opt_alpha) {
     if (do_single) {
         append_str(buf, len, shader_item_to_str(c[only_alpha * 4 + 3], with_alpha, only_alpha, opt_alpha, false));
     } else if (do_multiply) {
@@ -122,7 +122,7 @@ static void append_formula(char *buf, size_t *len, const uint8_t* c, bool do_sin
     }
 }
 
-void gfx_direct3d_common_build_shader(char buf[4096], size_t& len, size_t& num_floats, struct ColorCombiner& cc, const CCFeatures& ccf, bool include_root_signature, bool three_point_filtering) {
+OPTIMIZE_O3 void gfx_direct3d_common_build_shader(char buf[4096], size_t& len, size_t& num_floats, struct ColorCombiner& cc, const CCFeatures& ccf, bool include_root_signature, bool three_point_filtering) {
     len = 0;
     num_floats = 4;
 

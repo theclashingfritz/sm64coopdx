@@ -1,7 +1,9 @@
 #ifdef WAPI_DXGI
 
+#include <assert.h>
 #include <stdint.h>
 #include <math.h>
+#include <stdexcept>
 
 #include <map>
 #include <set>
@@ -370,7 +372,7 @@ static LRESULT CALLBACK gfx_dxgi_wnd_proc(HWND h_wnd, UINT message, WPARAM w_par
     return DefWindowProcW(h_wnd, message, w_param, l_param);
 }
 
-static void gfx_dxgi_init(const char *window_title) {
+static OPTIMIZE_O3 void gfx_dxgi_init(const char *window_title) {
     LARGE_INTEGER qpc_init, qpc_freq;
     QueryPerformanceCounter(&qpc_init);
     QueryPerformanceFrequency(&qpc_freq);
@@ -478,7 +480,7 @@ static uint64_t qpc_to_us(uint64_t qpc) {
     return qpc / dxgi.qpc_freq * 1000000 + qpc % dxgi.qpc_freq * 1000000 / dxgi.qpc_freq;
 }
 
-static bool gfx_dxgi_start_frame(void) {
+static OPTIMIZE_O3 bool gfx_dxgi_start_frame(void) {
     // HACK: all of this is too confusing to bother with right now
     /*DXGI_FRAME_STATISTICS stats;
     if (dxgi.swap_chain->GetFrameStatistics(&stats) == S_OK && (stats.SyncRefreshCount != 0 || stats.SyncQPCTime.QuadPart != 0ULL)) {
@@ -600,7 +602,7 @@ static bool gfx_dxgi_start_frame(void) {
     return true;
 }
 
-static void gfx_dxgi_swap_buffers_begin(void) {
+static OPTIMIZE_O3 void gfx_dxgi_swap_buffers_begin(void) {
     ThrowIfFailed(dxgi.swap_chain->Present(dxgi.length_in_vsync_frames, 0));
     //UINT this_present_id;
     //if (dxgi.swap_chain->GetLastPresentCount(&this_present_id) == S_OK) {
@@ -609,7 +611,7 @@ static void gfx_dxgi_swap_buffers_begin(void) {
     dxgi.dropped_frame = false;
 }
 
-static void gfx_dxgi_swap_buffers_end(void) {
+static OPTIMIZE_O3 void gfx_dxgi_swap_buffers_end(void) {
     LARGE_INTEGER t0, t1, t2;
     QueryPerformanceCounter(&t0);
     QueryPerformanceCounter(&t1);
@@ -637,7 +639,7 @@ static double gfx_dxgi_get_time(void) {
     return (double)(t.QuadPart - dxgi.qpc_init) / dxgi.qpc_freq;
 }
 
-void gfx_dxgi_create_factory_and_device(bool debug, int d3d_version, bool (*create_device_fn)(IDXGIAdapter1 *adapter, bool test_only)) {
+OPTIMIZE_O3 void gfx_dxgi_create_factory_and_device(bool debug, int d3d_version, bool (*create_device_fn)(IDXGIAdapter1 *adapter, bool test_only)) {
     if (dxgi.CreateDXGIFactory2 != nullptr) {
         ThrowIfFailed(dxgi.CreateDXGIFactory2(debug ? DXGI_CREATE_FACTORY_DEBUG : 0, __uuidof(IDXGIFactory2), &dxgi.factory));
     } else {
@@ -663,7 +665,7 @@ void gfx_dxgi_create_factory_and_device(bool debug, int d3d_version, bool (*crea
     SetWindowTextW(dxgi.h_wnd, w_title);
 }
 
-ComPtr<IDXGISwapChain1> gfx_dxgi_create_swap_chain(IUnknown *device) {
+OPTIMIZE_O3 ComPtr<IDXGISwapChain1> gfx_dxgi_create_swap_chain(IUnknown *device) {
     bool win8 = IsWindows8OrGreater(); // DXGI_SCALING_NONE is only supported on Win8 and beyond
     bool dxgi_13 = dxgi.CreateDXGIFactory2 != nullptr; // DXGI 1.3 introduced waitable object
 
@@ -773,21 +775,33 @@ void gfx_dxgi_set_clipboard_text(const char* text) {
 
 void gfx_dxgi_set_cursor_visible(bool visible) { ShowCursor(visible); }
 
-void ThrowIfFailed(HRESULT res) {
-    if (FAILED(res)) {
-        fprintf(stderr, "Error: 0x%08X\n", res);
-        throw res;
-    }
+OPTIMIZE_O3 void ThrowIfFailedExt(HRESULT res, UNUSED const char *file, UNUSED const char *function, UNUSED u64 lineno) {
+    if (!FAILED(res)) { return; }
+    
+    char message[1024];
+    UNUSED int len = sprintf_s(message, 1024, "ERROR: 0x%08X\n", res);
+    fprintf(stderr, message);
+#if DEBUG!=0
+    sprintf_s(message + len, 1024 - len, "%s:%s:%d\n", file, function, lineno);
+#endif
+    
+    throw std::runtime_error(message);
 }
 
-void ThrowIfFailed(HRESULT res, HWND h_wnd, const char *message) {
-    if (FAILED(res)) {
-        char full_message[256];
-        sprintf(full_message, "%s\n\nHRESULT: 0x%08X", message, res);
-        dxgi.showing_error = true;
-        MessageBox(h_wnd, full_message, "Error", MB_OK | MB_ICONERROR);
-        throw res;
-    }
+
+OPTIMIZE_O3 void ThrowIfFailedExt(HRESULT res, HWND h_wnd, const char *message, UNUSED const char *file, UNUSED const char *function, UNUSED u64 lineno) {
+    if (!FAILED(res)) { return; }
+    
+    char full_message[1024];
+#if DEBUG!=0
+    sprintf_s(full_message, 1024, "%s\n\nHRESULT: 0x%08X\n%s:%s:%d\n", message, res, file, function, lineno);
+#else
+    sprintf_s(full_message, 1024, "%s\n\nHRESULT: 0x%08X\n", message, res);
+#endif
+    dxgi.showing_error = true;
+    MessageBox(h_wnd, full_message, "Error", MB_OK | MB_ICONERROR);
+    
+    throw std::runtime_error(message);
 }
 
 struct GfxWindowManagerAPI gfx_dxgi = {

@@ -136,7 +136,7 @@ static struct {
 
 static LARGE_INTEGER last_time, accumulated_time, frequency;
 
-static void create_render_target_views(bool is_resize) {
+static OPTIMIZE_O3 void create_render_target_views(bool is_resize) {
     DXGI_SWAP_CHAIN_DESC1 desc1;
 
     if (is_resize) {
@@ -148,8 +148,8 @@ static void create_render_target_views(bool is_resize) {
         // Resize swap chain buffers
 
         ThrowIfFailed(d3d.swap_chain->GetDesc1(&desc1));
-        ThrowIfFailed(d3d.swap_chain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, desc1.Flags),
-                      gfx_dxgi_get_h_wnd(), "Failed to resize IDXGISwapChain buffers.");
+        ThrowIfFailedWithMsgBox(d3d.swap_chain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, desc1.Flags),
+                                gfx_dxgi_get_h_wnd(), "Failed to resize IDXGISwapChain buffers.");
     }
 
     // Get new size
@@ -159,11 +159,11 @@ static void create_render_target_views(bool is_resize) {
     // Create back buffer
 
     ComPtr<ID3D11Texture2D> backbuffer_texture;
-    ThrowIfFailed(d3d.swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID *) backbuffer_texture.GetAddressOf()),
-                  gfx_dxgi_get_h_wnd(), "Failed to get backbuffer from IDXGISwapChain.");
+    ThrowIfFailedWithMsgBox(d3d.swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID *) backbuffer_texture.GetAddressOf()),
+                            gfx_dxgi_get_h_wnd(), "Failed to get backbuffer from IDXGISwapChain.");
 
-    ThrowIfFailed(d3d.device->CreateRenderTargetView(backbuffer_texture.Get(), nullptr, d3d.backbuffer_view.GetAddressOf()),
-                  gfx_dxgi_get_h_wnd(), "Failed to create render target view.");
+    ThrowIfFailedWithMsgBox(d3d.device->CreateRenderTargetView(backbuffer_texture.Get(), nullptr, d3d.backbuffer_view.GetAddressOf()),
+                            gfx_dxgi_get_h_wnd(), "Failed to create render target view.");
 
     // Create depth buffer
 
@@ -192,11 +192,11 @@ static void create_render_target_views(bool is_resize) {
     d3d.current_height = desc1.Height;
 }
 
-static void gfx_d3d11_init(void) {
+static OPTIMIZE_O3 void gfx_d3d11_init(void) {
     // Load d3d11.dll
     d3d.d3d11_module = LoadLibraryW(L"d3d11.dll");
     if (d3d.d3d11_module == nullptr) {
-        ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()), gfx_dxgi_get_h_wnd(), "d3d11.dll could not be loaded");
+        ThrowIfFailedWithMsgBox(HRESULT_FROM_WIN32(GetLastError()), gfx_dxgi_get_h_wnd(), "d3d11.dll could not be loaded");
     }
     d3d.D3D11CreateDevice = (PFN_D3D11_CREATE_DEVICE)GetProcAddress(d3d.d3d11_module, "D3D11CreateDevice");
 
@@ -205,7 +205,7 @@ static void gfx_d3d11_init(void) {
     if (d3d.d3dcompiler_module == nullptr) {
         d3d.d3dcompiler_module = LoadLibraryW(L"D3DCompiler_43.dll");
         if (d3d.d3dcompiler_module == nullptr) {
-            ThrowIfFailed(HRESULT_FROM_WIN32(GetLastError()), gfx_dxgi_get_h_wnd(), "D3DCompiler_47.dll or D3DCompiler_43.dll could not be loaded");
+            ThrowIfFailedWithMsgBox(HRESULT_FROM_WIN32(GetLastError()), gfx_dxgi_get_h_wnd(), "D3DCompiler_47.dll or D3DCompiler_43.dll could not be loaded");
         }
     }
     d3d.D3DCompile = (pD3DCompile)GetProcAddress(d3d.d3dcompiler_module, "D3DCompile");
@@ -242,7 +242,7 @@ static void gfx_d3d11_init(void) {
         if (test_only) {
             return SUCCEEDED(res);
         } else {
-            ThrowIfFailed(res, gfx_dxgi_get_h_wnd(), "Failed to create D3D11 device.");
+            ThrowIfFailedWithMsgBox(res, gfx_dxgi_get_h_wnd(), "Failed to create D3D11 device.");
             return true;
         }
     });
@@ -258,8 +258,8 @@ static void gfx_d3d11_init(void) {
     // Create D3D Debug device if in debug mode
 
 #if DEBUG_D3D
-    ThrowIfFailed(d3d.device->QueryInterface(__uuidof(ID3D11Debug), (void **) d3d.debug.GetAddressOf()),
-                  gfx_dxgi_get_h_wnd(), "Failed to get ID3D11Debug device.");
+    ThrowIfFailedWithMsgBox(d3d.device->QueryInterface(__uuidof(ID3D11Debug), (void **) d3d.debug.GetAddressOf()),
+                            gfx_dxgi_get_h_wnd(), "Failed to get ID3D11Debug device.");
 #endif
 
     // Create views
@@ -277,8 +277,8 @@ static void gfx_d3d11_init(void) {
     vertex_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     vertex_buffer_desc.MiscFlags = 0;
 
-    ThrowIfFailed(d3d.device->CreateBuffer(&vertex_buffer_desc, nullptr, d3d.vertex_buffer.GetAddressOf()),
-                  gfx_dxgi_get_h_wnd(), "Failed to create vertex buffer.");
+    ThrowIfFailedWithMsgBox(d3d.device->CreateBuffer(&vertex_buffer_desc, nullptr, d3d.vertex_buffer.GetAddressOf()),
+                            gfx_dxgi_get_h_wnd(), "Failed to create vertex buffer.");
 
     // Create per-frame constant buffer
 
@@ -291,8 +291,8 @@ static void gfx_d3d11_init(void) {
     constant_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     constant_buffer_desc.MiscFlags = 0;
 
-    ThrowIfFailed(d3d.device->CreateBuffer(&constant_buffer_desc, nullptr, d3d.per_frame_cb.GetAddressOf()),
-                  gfx_dxgi_get_h_wnd(), "Failed to create per-frame constant buffer.");
+    ThrowIfFailedWithMsgBox(d3d.device->CreateBuffer(&constant_buffer_desc, nullptr, d3d.per_frame_cb.GetAddressOf()),
+                            gfx_dxgi_get_h_wnd(), "Failed to create per-frame constant buffer.");
 
     d3d.context->PSSetConstantBuffers(0, 1, d3d.per_frame_cb.GetAddressOf());
 
@@ -304,8 +304,8 @@ static void gfx_d3d11_init(void) {
     constant_buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     constant_buffer_desc.MiscFlags = 0;
 
-    ThrowIfFailed(d3d.device->CreateBuffer(&constant_buffer_desc, nullptr, d3d.per_draw_cb.GetAddressOf()),
-                  gfx_dxgi_get_h_wnd(), "Failed to create per-draw constant buffer.");
+    ThrowIfFailedWithMsgBox(d3d.device->CreateBuffer(&constant_buffer_desc, nullptr, d3d.per_draw_cb.GetAddressOf()),
+                            gfx_dxgi_get_h_wnd(), "Failed to create per-draw constant buffer.");
 
     d3d.context->PSSetConstantBuffers(1, 1, d3d.per_draw_cb.GetAddressOf());
 
@@ -324,7 +324,7 @@ static void gfx_d3d11_load_shader(struct ShaderProgram *new_prg) {
     d3d.shader_program = (struct ShaderProgramD3D11 *)new_prg;
 }
 
-static struct ShaderProgram *gfx_d3d11_create_and_load_new_shader(struct ColorCombiner* cc) {
+static OPTIMIZE_O3 struct ShaderProgram *gfx_d3d11_create_and_load_new_shader(struct ColorCombiner* cc) {
     CCFeatures cc_features = { 0 };
     gfx_cc_get_features(cc, &cc_features);
 
@@ -416,7 +416,7 @@ static struct ShaderProgram *gfx_d3d11_create_and_load_new_shader(struct ColorCo
     return (struct ShaderProgram *)(d3d.shader_program = prg);
 }
 
-static struct ShaderProgram *gfx_d3d11_lookup_shader(struct ColorCombiner* cc) {
+static OPTIMIZE_O3 struct ShaderProgram *gfx_d3d11_lookup_shader(struct ColorCombiner* cc) {
     for (size_t i = 0; i < d3d.shader_program_pool_size; i++) {
         if (d3d.shader_program_pool[i].hash == cc->hash) {
             return (struct ShaderProgram *)&d3d.shader_program_pool[i];
@@ -433,7 +433,7 @@ static void gfx_d3d11_shader_get_info(struct ShaderProgram *prg, uint8_t *num_in
     used_textures[1] = p->used_textures[1];
 }
 
-static uint32_t gfx_d3d11_new_texture(void) {
+static OPTIMIZE_O3 uint32_t gfx_d3d11_new_texture(void) {
     d3d.textures.resize(d3d.textures.size() + 1);
     return (uint32_t)(d3d.textures.size() - 1);
 }
@@ -450,15 +450,18 @@ static D3D11_TEXTURE_ADDRESS_MODE gfx_cm_to_d3d11(uint32_t val) {
     return (val & G_TX_MIRROR) ? D3D11_TEXTURE_ADDRESS_MIRROR : D3D11_TEXTURE_ADDRESS_WRAP;
 }
 
-static void gfx_d3d11_upload_texture(const uint8_t *rgba32_buf, int width, int height) {
-    // Create texture
+static OPTIMIZE_O3 void gfx_d3d11_upload_texture(const uint8_t *rgba32_buf, int width, int height) {
+    // Create texture and automatically create mipmaps for the texture.
+    
+    // NOTE: f3dex2e actually supports a manual form of mipmapping. 
+    // How would we go about supporting it?
 
     D3D11_TEXTURE2D_DESC texture_desc;
     ZeroMemory(&texture_desc, sizeof(D3D11_TEXTURE2D_DESC));
 
     texture_desc.Width = width;
     texture_desc.Height = height;
-    texture_desc.Usage = D3D11_USAGE_IMMUTABLE;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
     texture_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
     texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     texture_desc.MiscFlags = D3D11_RESOURCE_MISC_GENERATE_MIPS;
@@ -500,7 +503,7 @@ static void gfx_d3d11_upload_texture(const uint8_t *rgba32_buf, int width, int h
     d3d.context->GenerateMips(texture_data->resource_view.Get());
 }
 
-static void gfx_d3d11_set_sampler_parameters(int tile, bool linear_filter, uint32_t cms, uint32_t cmt) {
+static OPTIMIZE_O3 void gfx_d3d11_set_sampler_parameters(int tile, bool linear_filter, uint32_t cms, uint32_t cmt) {
     D3D11_SAMPLER_DESC sampler_desc;
     ZeroMemory(&sampler_desc, sizeof(D3D11_SAMPLER_DESC));
 
@@ -609,7 +612,7 @@ static void gfx_d3d11_refresh_decal() {
     d3d.context->RSSetState(d3d.rasterizer_state.Get());
 }
 
-static void gfx_d3d11_refresh_textures() {
+static OPTIMIZE_O3 void gfx_d3d11_refresh_textures() {
 #if THREE_POINT_FILTERING
     bool textures_changed = false;
 #endif
@@ -661,7 +664,7 @@ static void gfx_d3d11_refresh_shader() {
     d3d.context->OMSetBlendState(d3d.shader_program->blend_state.Get(), 0, 0xFFFFFFFF);
 }
 
-static void gfx_d3d11_update_vertex_data(float buf_vbo[], size_t buf_vbo_len) {
+static OPTIMIZE_O3 void gfx_d3d11_update_vertex_data(float buf_vbo[], size_t buf_vbo_len) {
     // Set vertex buffer data
 
     D3D11_MAPPED_SUBRESOURCE ms;
@@ -698,7 +701,7 @@ static void gfx_d3d11_on_resize(void) {
     create_render_target_views(true);
 }
 
-static void gfx_d3d11_start_frame(void) {
+static OPTIMIZE_O3 void gfx_d3d11_start_frame(void) {
     // Set render targets
 
     d3d.context->OMSetRenderTargets(1, d3d.backbuffer_view.GetAddressOf(), d3d.depth_stencil_view.Get());

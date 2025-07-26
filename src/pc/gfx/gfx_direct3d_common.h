@@ -5,9 +5,10 @@
 
 #include <stdint.h>
 
+#include "macros.h"
 #include "gfx_cc.h"
 
-void gfx_direct3d_common_build_shader(char buf[4096], size_t& len, size_t& num_floats, struct ColorCombiner& cc, const CCFeatures& cc_features, bool include_root_signature, bool three_point_filtering);
+OPTIMIZE_O3 void gfx_direct3d_common_build_shader(char buf[4096], size_t& len, size_t& num_floats, struct ColorCombiner& cc, const CCFeatures& cc_features, bool include_root_signature, bool three_point_filtering);
 
 #endif
 
