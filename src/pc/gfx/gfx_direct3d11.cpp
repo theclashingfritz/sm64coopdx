@@ -339,7 +339,7 @@ static OPTIMIZE_O3 struct ShaderProgram *gfx_d3d11_create_and_load_new_shader(st
 #if DEBUG_D3D
     UINT compile_flags = D3DCOMPILE_DEBUG;
 #else
-    UINT compile_flags = D3DCOMPILE_OPTIMIZATION_LEVEL2;
+    UINT compile_flags = D3DCOMPILE_OPTIMIZATION_LEVEL3;
 #endif
 
     HRESULT hr = d3d.D3DCompile(buf, len, nullptr, nullptr, nullptr, "VSMain", "vs_4_0_level_9_1", compile_flags, 0, vs.GetAddressOf(), error_blob.GetAddressOf());
