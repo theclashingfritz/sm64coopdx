@@ -11022,6 +11022,12 @@ function djui_menu_get_theme()
     -- ...
 end
 
+--- @return boolean
+--- Checks if the DJUI playerlist ping icon is visible
+function djui_is_playerlist_ping_visible()
+    -- ...
+end
+
 --- @return integer
 --- Gets the current state of the dialog box
 function get_dialog_box_state()
@@ -11157,6 +11163,25 @@ end
 --- @param value integer
 --- Sets if the star counter on the HUD should flash
 function hud_set_flash(value)
+    -- ...
+end
+
+--- @param part ActSelectHudPart
+--- Hides part of the Act Select HUD
+function act_select_hud_hide(part)
+    -- ...
+end
+
+--- @param part ActSelectHudPart
+--- Shows part of the Act Select HUD
+function act_select_hud_show(part)
+    -- ...
+end
+
+--- @param part ActSelectHudPart
+--- @return boolean
+--- Checks if part of the Act Select HUD is hidden
+function act_select_hud_is_hidden(part)
     -- ...
 end
 

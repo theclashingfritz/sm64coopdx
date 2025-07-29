@@ -63,10 +63,11 @@ void djui_panel_display_create(struct DjuiBase* caller) {
         djui_checkbox_create(body, DLANG(DISPLAY, FULLSCREEN), &configWindow.fullscreen, djui_panel_display_apply);
         djui_checkbox_create(body, DLANG(DISPLAY, FORCE_4BY3), &configForce4By3, djui_panel_display_apply);
         djui_checkbox_create(body, DLANG(DISPLAY, SHOW_FPS), &configShowFPS, NULL);
+        djui_checkbox_create(body, DLANG(DISPLAY, SHOW_PING), &configShowPing, NULL);
         djui_checkbox_create(body, DLANG(DISPLAY, VSYNC), &configWindow.vsync, djui_panel_display_apply);
 
-        char* framerateModeChoices[3] = { DLANG(DISPLAY, AUTO), DLANG(DISPLAY, MANUAL), DLANG(DISPLAY, UNCAPPED_FRAMERATE) };
-        djui_selectionbox_create(body, DLANG(DISPLAY, Framerate Mode), framerateModeChoices, 3, &configFramerateMode, djui_panel_display_framerate_mode_change);
+        char* framerateModeChoices[3] = { DLANG(DISPLAY, AUTO), DLANG(DISPLAY, MANUAL), DLANG(DISPLAY, UNCAPPED) };
+        djui_selectionbox_create(body, DLANG(DISPLAY, FRAMERATE_MODE), framerateModeChoices, 3, &configFramerateMode, djui_panel_display_framerate_mode_change);
 
         struct DjuiRect* rect1 = djui_rect_container_create(body, 32);
         {

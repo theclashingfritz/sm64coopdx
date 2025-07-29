@@ -33082,6 +33082,21 @@ int smlua_func_djui_menu_get_theme(UNUSED lua_State* L) {
     return 1;
 }
 
+int smlua_func_djui_is_playerlist_ping_visible(UNUSED lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 0) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "djui_is_playerlist_ping_visible", 0, top);
+        return 0;
+    }
+
+
+    lua_pushboolean(L, djui_is_playerlist_ping_visible());
+
+    return 1;
+}
+
 int smlua_func_get_dialog_box_state(UNUSED lua_State* L) {
     if (L == NULL) { return 0; }
 
@@ -33439,6 +33454,57 @@ int smlua_func_hud_set_flash(lua_State* L) {
     if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "hud_set_flash"); return 0; }
 
     hud_set_flash(value);
+
+    return 1;
+}
+
+int smlua_func_act_select_hud_hide(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "act_select_hud_hide", 1, top);
+        return 0;
+    }
+
+    int part = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "act_select_hud_hide"); return 0; }
+
+    act_select_hud_hide(part);
+
+    return 1;
+}
+
+int smlua_func_act_select_hud_show(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "act_select_hud_show", 1, top);
+        return 0;
+    }
+
+    int part = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "act_select_hud_show"); return 0; }
+
+    act_select_hud_show(part);
+
+    return 1;
+}
+
+int smlua_func_act_select_hud_is_hidden(lua_State* L) {
+    if (L == NULL) { return 0; }
+
+    int top = lua_gettop(L);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "act_select_hud_is_hidden", 1, top);
+        return 0;
+    }
+
+    int part = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "act_select_hud_is_hidden"); return 0; }
+
+    lua_pushboolean(L, act_select_hud_is_hidden(part));
 
     return 1;
 }
@@ -38185,6 +38251,7 @@ void smlua_bind_functions_autogen(void) {
     smlua_bind_function(L, "djui_get_playerlist_page_index", smlua_func_djui_get_playerlist_page_index);
     smlua_bind_function(L, "djui_menu_get_font", smlua_func_djui_menu_get_font);
     smlua_bind_function(L, "djui_menu_get_theme", smlua_func_djui_menu_get_theme);
+    smlua_bind_function(L, "djui_is_playerlist_ping_visible", smlua_func_djui_is_playerlist_ping_visible);
     smlua_bind_function(L, "get_dialog_box_state", smlua_func_get_dialog_box_state);
     smlua_bind_function(L, "get_dialog_id", smlua_func_get_dialog_id);
     smlua_bind_function(L, "get_last_star_or_key", smlua_func_get_last_star_or_key);
@@ -38206,6 +38273,9 @@ void smlua_bind_functions_autogen(void) {
     smlua_bind_function(L, "hud_render_power_meter_interpolated", smlua_func_hud_render_power_meter_interpolated);
     smlua_bind_function(L, "hud_get_flash", smlua_func_hud_get_flash);
     smlua_bind_function(L, "hud_set_flash", smlua_func_hud_set_flash);
+    smlua_bind_function(L, "act_select_hud_hide", smlua_func_act_select_hud_hide);
+    smlua_bind_function(L, "act_select_hud_show", smlua_func_act_select_hud_show);
+    smlua_bind_function(L, "act_select_hud_is_hidden", smlua_func_act_select_hud_is_hidden);
     smlua_bind_function(L, "is_game_paused", smlua_func_is_game_paused);
     smlua_bind_function(L, "is_transition_playing", smlua_func_is_transition_playing);
     smlua_bind_function(L, "allocate_mario_action", smlua_func_allocate_mario_action);
