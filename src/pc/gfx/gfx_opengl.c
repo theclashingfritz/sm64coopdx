@@ -70,15 +70,17 @@ static GLuint opengl_vbo;
 static size_t opengl_vbo_capi = 0; // Capicacty of the VBO buffer.
 static GLuint opengl_vao;
 
-static int tex_cache_size = 0;
-static int num_textures = 0;
-static struct GLTexture *tex_cache = NULL;
-
 static struct ShaderProgram *opengl_prg = NULL;
-static struct GLTexture *opengl_tex[2];
-static int opengl_curtex = 0;
 
-static uint32_t frame_count;
+static GLint opengl_tex_capi = 0;
+static int opengl_tex_cur = 0;
+static struct GLTexture **opengl_tex = NULL;
+
+static int opengl_tex_cache_capi = 0;
+static int opengl_tex_cache_size = 0;
+static struct GLTexture *opengl_tex_cache = NULL;
+
+static uint32_t frame_count = 0;
 
 static bool gfx_opengl_z_is_from_0_to_1(void) {
     return false;
@@ -581,21 +583,20 @@ static void gfx_opengl_shader_get_info(struct ShaderProgram *prg, uint8_t *num_i
 }
 
 static GLuint gfx_opengl_new_texture(void) {
-    if (num_textures >= tex_cache_size) {
-        tex_cache_size += TEX_CACHE_STEP;
-        tex_cache = realloc(tex_cache, sizeof(struct GLTexture) * tex_cache_size);
-        if (!tex_cache) sys_fatal("out of memory allocating texture cache");
-        // invalidate these because they might be pointing to garbage now
-        opengl_tex[0] = NULL;
-        opengl_tex[1] = NULL;
+    if (opengl_tex_cache_size >= opengl_tex_cache_capi) {
+        opengl_tex_cache_capi += TEX_CACHE_STEP;
+        opengl_tex_cache = realloc(opengl_tex_cache, sizeof(struct GLTexture) * opengl_tex_cache_capi);
+        if (!opengl_tex_cache) sys_fatal("Out of memory allocating texture unit cache.");
+        // Invalidate these because they might be pointing to garbage now.
+        memset(opengl_tex, 0, opengl_tex_capi * sizeof(struct GLTexture *));
     }
-    glGenTextures(1, &tex_cache[num_textures].gltex);
-    return num_textures++;
+    glGenTextures(1, &opengl_tex_cache[opengl_tex_cache_size].gltex);
+    return opengl_tex_cache_size++;
 }
 
 static void gfx_opengl_select_texture(int tile, GLuint texture_id) {
-     opengl_tex[tile] = tex_cache + texture_id;
-     opengl_curtex = tile;
+     opengl_tex[tile] = opengl_tex_cache + texture_id;
+     opengl_tex_cur = tile;
      glActiveTexture(GL_TEXTURE0 + tile);
      glBindTexture(GL_TEXTURE_2D, opengl_tex[tile]->gltex);
      gfx_opengl_set_texture_uniforms(opengl_prg, tile);
@@ -603,8 +604,8 @@ static void gfx_opengl_select_texture(int tile, GLuint texture_id) {
 
 static void gfx_opengl_upload_texture(const uint8_t *rgba32_buf, int width, int height) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba32_buf);
-    opengl_tex[opengl_curtex]->size[0] = width;
-    opengl_tex[opengl_curtex]->size[1] = height;
+    opengl_tex[opengl_tex_cur]->size[0] = width;
+    opengl_tex[opengl_tex_cur]->size[1] = height;
 }
 
 static uint32_t gfx_cm_to_opengl(uint32_t val) {
@@ -621,7 +622,7 @@ static void gfx_opengl_set_sampler_parameters(int tile, bool linear_filter, uint
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, gfx_cm_to_opengl(cms));
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, gfx_cm_to_opengl(cmt));
-    opengl_curtex = tile;
+    opengl_tex_cur = tile;
     if (opengl_tex[tile]) {
         opengl_tex[tile]->filter = linear_filter;
         gfx_opengl_set_texture_uniforms(opengl_prg, tile);
@@ -699,12 +700,16 @@ static void gfx_opengl_init(void) {
 #if FOR_WINDOWS || defined(OSX_BUILD)
     GLenum err;
     if ((err = glewInit()) != GLEW_OK)
-        sys_fatal("could not init GLEW:\n%s", glewGetErrorString(err));
+        sys_fatal("Could not init GLEW:\n%s", glewGetErrorString(err));
 #endif
 
-    tex_cache_size = TEX_CACHE_STEP;
-    tex_cache = calloc(tex_cache_size, sizeof(struct GLTexture));
-    if (!tex_cache) sys_fatal("out of memory allocating texture cache");
+    glGetIntegerv(GL_MAX_TEXTURE_UNITS, &opengl_tex_capi);
+    opengl_tex = calloc(opengl_tex_capi, sizeof(struct GLTexture *));
+    if (!opengl_tex) sys_fatal("Out of memory allocating texture units.");
+
+    opengl_tex_cache_capi = TEX_CACHE_STEP;
+    opengl_tex_cache = calloc(opengl_tex_cache_capi, sizeof(struct GLTexture));
+    if (!opengl_tex_cache) sys_fatal("Out of memory allocating texture unit cache.");
 
     // check GL version
     int vmajor = 0;
@@ -747,6 +752,8 @@ static void gfx_opengl_finish_render(void) {
 }
 
 static void gfx_opengl_shutdown(void) {
+    free(opengl_tex);
+    free(opengl_tex_cache);
 }
 
 struct GfxRenderingAPI gfx_opengl_api = {
