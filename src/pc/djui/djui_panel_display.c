@@ -83,9 +83,8 @@ void djui_panel_display_create(struct DjuiBase* caller) {
 
     #if defined(__SWITCH__)
         char *framerateChoices[3] = { "30", "60", NULL };
-        struct DjuiSelectionbox *framerate = djui_selectionbox_create(body, "FPS Limit", framerateChoices, 1, NULL);
-        framerate->value = &sFramerateSelection;
-        framerate->data.selectionbox.onChange = djui_panel_display_frame_limit_change;
+        // Argumentos: (Padre, Título, Opciones, Cantidad, PunteroValor, FunciónCambio)
+        djui_selectionbox_create(body, "FPS Limit", framerateChoices, 2, &sFramerateSelection, djui_panel_display_frame_limit_change);
     #else
         char* framerateModeChoices[3] = { DLANG(DISPLAY, AUTO), DLANG(DISPLAY, UNLIMITED), DLANG(DISPLAY, MANUAL) };
         djui_selectionbox_create(body, DLANG(DISPLAY, FRAMERATE_MODE), framerateModeChoices, 3, &configFramerateMode, djui_panel_display_framerate_mode_change);

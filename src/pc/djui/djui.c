@@ -16,7 +16,7 @@
 #include "djui_hud_utils.h"
 #include "engine/math_util.h"
 #include "pc/utils/misc.h"
-
+f32 gFramePercentage = 0.0f;
 static Gfx* sSavedDisplayListHead = NULL;
 static Gfx* sHookHudRenderGfx = NULL;
 static size_t sHookHudRenderGfxSize = 0;

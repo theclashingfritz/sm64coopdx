@@ -1274,7 +1274,7 @@ static const struct GfxParamInfo *GetGfxParamInfo(const char *command) {
 
 static std::string ResolveGfxCommand(lua_State *L, GfxData *aGfxData, const char *command) {
     const struct GfxParamInfo *paramInfo = GetGfxParamInfo(command);
-    if (!paramInfo) { PrintDataErrorGfx("  ERROR: Unknown gfx command: %s", command); return ""; }
+    if (!paramInfo) { DynOS_PrintDataErrorGfx("  ERROR: Unknown gfx command: %s", command); return ""; }
 
     // Count parameters
     // Find the position of each % to retrieve the correct expected type from the command paramInfo
@@ -1290,7 +1290,7 @@ static std::string ResolveGfxCommand(lua_State *L, GfxData *aGfxData, const char
         if (*str == '%' && paramPosIndex < paramInfo->count) { paramPos[paramPosIndex++] = paramCount - 1; }
     }
     if (paramCount != paramInfo->count) {
-        PrintDataErrorGfx("  ERROR: Incorrect parameter count. Got %d, expected %d.", paramCount, paramInfo->count);
+        DynOS_PrintDataErrorGfx("  ERROR: Incorrect parameter count. Got %d, expected %d.", paramCount, paramInfo->count);
         return "";
     }
 
@@ -1302,13 +1302,13 @@ static std::string ResolveGfxCommand(lua_State *L, GfxData *aGfxData, const char
             const GfxParamType paramType = *(++command);
             const GfxParamType expectedType = paramInfo->types[paramNum];
             if (expectedType == GFX_PARAM_TYPE_PTR) {
-                PrintDataErrorGfx("  ERROR: Gfx macro has unsupported type, this macro is not usable");
+                DynOS_PrintDataErrorGfx("  ERROR: Gfx macro has unsupported type, this macro is not usable");
                 return "";
             }
             if (expectedType != paramType &&
                 (expectedType != GFX_PARAM_TYPE_INT || !GFX_PARAM_TYPE_IS_INT_OR_CONSTANT(paramType)) // Allow strings as constants for integer parameters
             ) {
-                PrintDataErrorGfx("  ERROR: Unexpected value type for parameter %d. Got '%c', expected '%c'", paramNum, paramType, expectedType);
+                DynOS_PrintDataErrorGfx("  ERROR: Unexpected value type for parameter %d. Got '%c', expected '%c'", paramNum, paramType, expectedType);
                 return "";
             }
             String value = ResolveParam(L, aGfxData, paramIndex++, paramType);

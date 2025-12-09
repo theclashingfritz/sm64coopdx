@@ -237,7 +237,7 @@ void DynOS_Pointer_Write(BinFile* aFile, const void* aPtr, GfxData* aGfxData, u8
     }
     String error = DynOS_Builtin_Func_CheckMisuse(aPtr, aFuncType);
     if (!error.Empty()) {
-        PrintDataError("  ERROR: %s", error.begin());
+        DynOS_PrintDataError("  ERROR: %s", error.begin());
         return;
     }
 

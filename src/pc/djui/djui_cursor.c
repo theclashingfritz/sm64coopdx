@@ -25,6 +25,7 @@ static f32 sPrevCursorX = 0;
 static f32 sPrevCursorY = 0;
 
 void djui_cursor_set_visible(bool visible) {
+#ifndef __SWITCH__
     if (sMouseCursor) {
         djui_base_set_visible(&sMouseCursor->base, visible);
     }
@@ -38,6 +39,7 @@ void djui_cursor_set_visible(bool visible) {
     }
     sSavedMouseX = mouse_window_x;
     sSavedMouseY = mouse_window_y;
+#endif
 }
 
 bool djui_cursor_inside_base(struct DjuiBase* base) {

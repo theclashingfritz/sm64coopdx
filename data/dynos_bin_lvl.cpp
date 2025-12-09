@@ -415,7 +415,7 @@ static LevelScript ParseLevelScriptSymbolArgInternal(GfxData* aGfxData, DataNode
     }
     String error = DynOS_Builtin_Func_CheckMisuse(_Arg.begin(), FUNCTION_LVL);
     if (!error.Empty()) {
-        PrintDataError("  ERROR: %s", error.begin());
+        DynOS_PrintDataError("  ERROR: %s", error.begin());
         *found = false;
         return 0;
     }
@@ -1072,12 +1072,12 @@ static DataNode<LevelScript>* DynOS_Lvl_Load(BinFile *aFile, GfxData *aGfxData) 
         void *_Ptr = DynOS_Pointer_Load(aFile, aGfxData, _Value, FUNCTION_LVL, &_Node->mFlags);
         if (_Ptr) {
             if (!requirePointer && _Value != LUA_VAR_CODE) {
-                PrintError("Didn't expect a pointer while reading level script: %s, %u", _Node->mName.begin(), _Value);
+                DynOS_PrintError("Didn't expect a pointer while reading level script: %s, %u", _Node->mName.begin(), _Value);
             }
             _Node->mData[i] = (uintptr_t) _Ptr;
         } else {
             if (requirePointer && _Value != LUA_VAR_CODE) {
-                PrintError("Expected a pointer while reading level script: %s, %u", _Node->mName.begin(), _Value);
+                DynOS_PrintError("Expected a pointer while reading level script: %s, %u", _Node->mName.begin(), _Value);
                 _Node->mData[i] = 0;
             } else {
                 _Node->mData[i] = (uintptr_t) _Value;

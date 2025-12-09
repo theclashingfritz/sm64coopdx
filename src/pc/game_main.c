@@ -195,7 +195,7 @@ static s32 get_num_frames_to_draw(f64 t) {
 }
 
 void produce_interpolation_frames_and_delay(void) {
-    bool is30Fps = (!configUncappedFramerate && configFrameLimit == FRAMERATE);
+    bool is30Fps = (configFramerateMode != RRM_UNLIMITED && configFrameLimit == FRAMERATE);
 
     gRenderingInterpolated = true;
 
@@ -224,7 +224,7 @@ void produce_interpolation_frames_and_delay(void) {
 
         sDrawnFrames++;
 
-        if (!is30Fps && configUncappedFramerate) { continue; }
+        if (!is30Fps && configFramerateMode == RRM_UNLIMITED) { continue; }
 
         // delay if our framerate is capped
         f64 now = clock_elapsed_f64();
@@ -269,6 +269,8 @@ void produce_one_frame(void) {
     CTX_EXTENT(CTX_RENDER, produce_interpolation_frames_and_delay);
 }
 
+#include <PR/ultratypes.h>
+Vp D_8032CF00 = {0};
 // used for rendering 2D scenes fullscreen like the loading or crash screens
 void produce_one_dummy_frame(void (*callback)(), u8 clearColorR, u8 clearColorG, u8 clearColorB) {
     // start frame

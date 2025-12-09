@@ -217,7 +217,7 @@ static void assign_tile_positions() {
 
 // Provide a replacement for realpath on Windows
 #ifdef _WIN32
-#define realpath(path, resolved_path) _fullpath(resolved_path, path, PATH_MAX)
+#define realpath(path, resolved_path) realpath(path, resolved_path)
 #endif
 
 /* write pngs to disc */

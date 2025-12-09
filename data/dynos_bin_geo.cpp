@@ -111,7 +111,7 @@ static s64 ParseGeoSymbolArg(GfxData* aGfxData, DataNode<GeoLayout>* aNode, u64&
     }
     String error = DynOS_Builtin_Func_CheckMisuse(_Arg.begin(), FUNCTION_GEO);
     if (!error.Empty()) {
-        PrintDataError("  ERROR: %s", error.begin());
+        DynOS_PrintDataError("  ERROR: %s", error.begin());
         return 0;
     }
 
@@ -359,7 +359,7 @@ static void ParseGeoSymbol(GfxData* aGfxData, DataNode<GeoLayout>* aNode, GeoLay
         } else {
             String error = DynOS_Builtin_Func_CheckMisuse(_Arg1.begin(), FUNCTION_GEO);
             if (!error.Empty()) {
-                PrintDataError("  ERROR: %s", error.begin());
+                DynOS_PrintDataError("  ERROR: %s", error.begin());
                 return;
             }
             u32 _FuncIndex = DynOS_Lua_RememberVariable(aGfxData, aHead + 1, _Arg1);
@@ -388,7 +388,7 @@ static void ParseGeoSymbol(GfxData* aGfxData, DataNode<GeoLayout>* aNode, GeoLay
         } else {
             String error = DynOS_Builtin_Func_CheckMisuse(_Arg1.begin(), FUNCTION_GEO);
             if (!error.Empty()) {
-                PrintDataError("  ERROR: %s", error.begin());
+                DynOS_PrintDataError("  ERROR: %s", error.begin());
                 return;
             }
             u32 _FuncIndex = DynOS_Lua_RememberVariable(aGfxData, aHead + 1, _Arg1);

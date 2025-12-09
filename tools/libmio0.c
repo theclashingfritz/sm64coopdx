@@ -298,7 +298,7 @@ int mio0_encode(const unsigned char *in, unsigned int length, unsigned char *out
 static FILE *mio0_open_out_file(const char *out_file) {
    if (strcmp(out_file, "-") == 0) {
 #if defined(_WIN32) || defined(_WIN64)
-      _setmode(_fileno(stdout), _O_BINARY);
+      setmode(fileno(stdout), O_BINARY);
 #endif
       return stdout;
    } else {

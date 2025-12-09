@@ -1943,7 +1943,7 @@ static BehaviorScript ParseBehaviorScriptSymbolArgInternal(GfxData *aGfxData, Da
     }
     String error = DynOS_Builtin_Func_CheckMisuse(_Arg.begin(), FUNCTION_BHV);
     if (!error.Empty()) {
-        PrintDataError("  ERROR: %s", error.begin());
+        DynOS_PrintDataError("  ERROR: %s", error.begin());
         *found = false;
         return 0;
     }
