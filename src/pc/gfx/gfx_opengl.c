@@ -781,7 +781,7 @@ static struct ShaderProgram *gfx_opengl_create_and_load_new_shader(struct ColorC
     } else {
         prg->used_lightmap = false;
     }
-    
+
     prg->uniform_locations[6] = glGetUniformLocation(shader_program, "uFilter");
 
     return prg;

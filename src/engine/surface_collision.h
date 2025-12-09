@@ -38,6 +38,12 @@ struct FloorGeometry
     f32 originOffset;
 };
 
+struct StaticObjectCollision
+{
+    u32 index;
+    u16 length;
+};
+
 extern Vec3f gFindWallDirection;
 extern u8 gFindWallDirectionActive;
 extern u8 gFindWallDirectionAirborne;
@@ -83,5 +89,10 @@ void find_surface_on_ray(Vec3f orig, Vec3f dir, struct Surface **hit_surface, Ve
 Sets whether collision finding functions should check wall directions.
 |descriptionEnd| */
 void set_find_wall_direction(Vec3f dir, bool active, bool airborne);
+
+/* |description|
+Gets the closest point of the triangle to `src` and returns it in `out`.
+|descriptionEnd| */
+void closest_point_to_triangle(struct Surface* surf, Vec3f src, OUT Vec3f out);
 
 #endif // SURFACE_COLLISION_H

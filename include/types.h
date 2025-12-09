@@ -54,6 +54,17 @@ typedef f32 Vec4f[4]; // X, Y, Z, W
 typedef s16 Vec4s[4];
 typedef s32 Vec4i[4];
 
+// Pointer types for return values
+typedef f32 *Vec2fp;
+typedef s16 *Vec2sp;
+typedef s32 *Vec2ip;
+typedef f32 *Vec3fp;
+typedef s16 *Vec3sp;
+typedef s32 *Vec3ip;
+typedef f32 *Vec4fp;
+typedef s16 *Vec4sp;
+typedef s32 *Vec4ip;
+
 typedef f32 Mat4[4][4];
 
 typedef uintptr_t GeoLayout;
@@ -96,14 +107,15 @@ struct VblankHandler
     OSMesg msg;
 };
 
-#define ANIM_FLAG_NOLOOP     (1 << 0) // 0x01
-#define ANIM_FLAG_BACKWARD   (1 << 1) // 0x02
-#define ANIM_FLAG_2          (1 << 2) // 0x04
-#define ANIM_FLAG_HOR_TRANS  (1 << 3) // 0x08
-#define ANIM_FLAG_VERT_TRANS (1 << 4) // 0x10
-#define ANIM_FLAG_5          (1 << 5) // 0x20
-#define ANIM_FLAG_6          (1 << 6) // 0x40
-#define ANIM_FLAG_7          (1 << 7) // 0x80
+#define ANIM_FLAG_NOLOOP      (1 << 0) // 0x01
+#define ANIM_FLAG_BACKWARD    (1 << 1) // 0x02
+#define ANIM_FLAG_2           (1 << 2) // 0x04
+#define ANIM_FLAG_HOR_TRANS   (1 << 3) // 0x08
+#define ANIM_FLAG_VERT_TRANS  (1 << 4) // 0x10
+#define ANIM_FLAG_5           (1 << 5) // 0x20
+#define ANIM_FLAG_6           (1 << 6) // 0x40
+#define ANIM_FLAG_7           (1 << 7) // 0x80
+#define ANIM_FLAG_BONE_TRANS  (1 << 8)
 
 struct Animation {
     // TODO: Optimize this later if possible.
@@ -362,6 +374,33 @@ struct Surface
     struct Object *object;
 };
 
+enum MarioAnimPart {
+    MARIO_ANIM_PART_NONE,
+
+    MARIO_ANIM_PART_ROOT,
+    MARIO_ANIM_PART_BUTT,
+    MARIO_ANIM_PART_TORSO,
+    MARIO_ANIM_PART_HEAD,
+    MARIO_ANIM_PART_UPPER_LEFT,
+    MARIO_ANIM_PART_LEFT_ARM,
+    MARIO_ANIM_PART_LEFT_FOREARM,
+    MARIO_ANIM_PART_LEFT_HAND,
+    MARIO_ANIM_PART_UPPER_RIGHT,
+    MARIO_ANIM_PART_RIGHT_ARM,
+    MARIO_ANIM_PART_RIGHT_FOREARM,
+    MARIO_ANIM_PART_RIGHT_HAND,
+    MARIO_ANIM_PART_LOWER_LEFT,
+    MARIO_ANIM_PART_LEFT_THIGH,
+    MARIO_ANIM_PART_LEFT_LEG,
+    MARIO_ANIM_PART_LEFT_FOOT,
+    MARIO_ANIM_PART_LOWER_RIGHT,
+    MARIO_ANIM_PART_RIGHT_THIGH,
+    MARIO_ANIM_PART_RIGHT_LEG,
+    MARIO_ANIM_PART_RIGHT_FOOT,
+
+    MARIO_ANIM_PART_MAX,
+};
+
 struct MarioBodyState
 {
     // For optimization reasons, See MarioState
@@ -382,8 +421,10 @@ struct MarioBodyState
     
     Vec3f headPos;
     Vec3f torsoPos;
-    Vec3f handFootPos[4];
     Vec3f heldObjLastPosition; /// also known as HOLP
+
+    Vec3f animPartsPos[MARIO_ANIM_PART_MAX];
+    u32 currAnimPart;
     
     u32 updateTorsoTime;
     u32 updateHeadPosTime;
@@ -462,7 +503,7 @@ struct MarioState
     
     u8 visibleToEnemies;
     u8 wasNetworkVisible;
-    s16 dialogId;
+    s32 dialogId;
     s16 prevNumStarsForDialog;
     s16 unkB0;
     
@@ -540,11 +581,12 @@ struct MarioState
 
 struct TextureInfo
 {
-    u8 *texture;
+    const Texture *texture;
     const char *name;
     u32 width;
     u32 height;
-    u8 bitSize;
+    u8 format;
+    u8 size;
 };
 
 #define PLAY_MODE_NORMAL 0
@@ -562,5 +604,6 @@ struct TextureInfo
 
 #include "game/characters.h"
 #include "data/dynos.c.h"
+#include "src/pc/lua/smlua_autogen.h"
 
 #endif // _SM64_TYPES_H_

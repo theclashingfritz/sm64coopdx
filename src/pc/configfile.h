@@ -36,6 +36,13 @@ typedef struct {
     bool invertRightY;
 } ConfigStick;
 
+enum RefreshRateMode {
+    RRM_AUTO,
+    RRM_MANUAL,
+    RRM_UNLIMITED,
+    RRM_MAX
+};
+
 extern char configSaveNames[4][MAX_SAVE_NAME_STRING];
 
 // display settings
@@ -43,7 +50,8 @@ extern ConfigWindow configWindow;
 extern ConfigStick configStick;
 extern unsigned int configFiltering;
 extern bool         configShowFPS;
-extern bool         configUncappedFramerate;
+extern bool         configShowPing;
+extern enum RefreshRateMode configFramerateMode;
 extern unsigned int configFrameLimit;
 extern unsigned int configInterpolationMode;
 extern unsigned int configDrawDistance;
@@ -87,6 +95,7 @@ extern unsigned int configGamepadNumber;
 extern bool         configBackgroundGamepad;
 extern bool         configDisableGamepads;
 extern bool         configUseStandardKeyBindingsChat;
+extern bool         configSmoothScrolling;
 // free camera settings
 extern bool         configEnableFreeCamera;
 extern bool         configFreeCameraAnalog;
@@ -134,6 +143,7 @@ extern unsigned int configPlayerInteraction;
 extern unsigned int configPlayerKnockbackStrength;
 extern unsigned int configStayInLevelAfterStar;
 extern bool         configNametags;
+extern bool         configModDevMode;
 extern unsigned int configBouncyLevelBounds;
 extern bool         configSkipIntro;
 extern bool         configPauseAnywhere;
