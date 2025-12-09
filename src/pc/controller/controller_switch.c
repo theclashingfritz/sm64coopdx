@@ -150,24 +150,32 @@ static void update_button(OSContPad *pad, u32 button, u8 flag, u64 hid) {
 
 static void update_buttons(OSContPad *pad) {
     update_button_game(pad, START_BUTTON, HidNpadButton_Plus);
+
     update_button_djui(DJUI_BTN_SELECT, HidNpadButton_Minus);
 
-    update_button_game(pad, B_BUTTON, HidNpadButton_B);
-    update_button_game(pad, A_BUTTON, HidNpadButton_A);
-    update_button_game(pad, Y_BUTTON, HidNpadButton_Y);
-    update_button_game(pad, X_BUTTON, HidNpadButton_X);
+    update_button_game(pad, A_BUTTON, HidNpadButton_B); 
+    //update_button_game(pad, A_BUTTON, HidNpadButton_A); 
+
+    update_button_game(pad, B_BUTTON, HidNpadButton_Y); 
+    update_button_game(pad, B_BUTTON, HidNpadButton_X);
+
+    update_button_game(pad, Y_BUTTON, HidNpadButton_A);
 
     update_button_game(pad, L_TRIG, HidNpadButton_L);
-    update_button_game(pad, R_TRIG, HidNpadButton_ZL);
+
+
+    update_button_game(pad, Z_TRIG, HidNpadButton_ZL);
+
+
     update_button_game(pad, R_TRIG, HidNpadButton_R);
-    update_button_game(pad, Z_TRIG, HidNpadButton_ZR);
-    
+    update_button_game(pad, X_BUTTON, HidNpadButton_ZR);
+
     update_button_game(pad, U_JPAD, HidNpadButton_Up);
     update_button_game(pad, L_JPAD, HidNpadButton_Left);
     update_button_game(pad, D_JPAD, HidNpadButton_Down);
     update_button_game(pad, R_JPAD, HidNpadButton_Right);
     
-    // Bind the C stick to the C buttons.
+    // Bind the C Sticks to the C buttons
     update_button(pad, R_CBUTTONS, DJUI_BTN_CRIGHT, HidNpadButton_StickRRight);
     update_button(pad, L_CBUTTONS, DJUI_BTN_CLEFT, HidNpadButton_StickRLeft);
     update_button(pad, U_CBUTTONS, DJUI_BTN_CUP, HidNpadButton_StickRUp);

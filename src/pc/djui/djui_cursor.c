@@ -10,7 +10,6 @@ extern ALIGNED8 u8 gd_texture_hand_open[];
 extern ALIGNED8 u8 gd_texture_hand_closed[];
 
 struct DjuiImage* sMouseCursor = NULL;
-
 static bool sCursorMouseControlled = false;
 static struct DjuiBase* sInputControlledBase = NULL;
 
@@ -25,6 +24,7 @@ static f32 sPrevCursorX = 0;
 static f32 sPrevCursorY = 0;
 
 void djui_cursor_set_visible(bool visible) {
+
 #ifndef __SWITCH__
     if (sMouseCursor) {
         djui_base_set_visible(&sMouseCursor->base, visible);
@@ -185,6 +185,8 @@ void djui_cursor_interp(void) {
 
 void djui_cursor_update(void) {
     djui_cursor_update_position();
+
+    if (!djui_panel_is_active()) { return; }
 
     Gfx *savedDisplayListHead = gDisplayListHead;
     djui_cursor_render_cursor();

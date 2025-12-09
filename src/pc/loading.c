@@ -40,7 +40,7 @@ static void loading_screen_produce_frame_callback(void) {
     if (sLoading) { djui_base_render(&sLoading->base); }
 }
 
-static void loading_screen_produce_one_frame(void) {
+void loading_screen_produce_one_frame(void) {
     produce_one_dummy_frame(loading_screen_produce_frame_callback, 0x00, 0x00, 0x00);
 }
 
@@ -179,7 +179,11 @@ void render_loading_screen(void) {
 
     // loading screen loop
     while (!gGameInited) {
+    #ifdef __SWITCH__ // Switch does not support wm_api main loop, so we just produce one frame directly
+        loading_screen_produce_one_frame();
+    #else
         wm_api->main_loop(loading_screen_produce_one_frame);
+    #endif
     }
 
     int err = join_thread(&gLoadingThread);
@@ -192,7 +196,11 @@ void render_rom_setup_screen(void) {
     loading_screen_set_segment_text("No rom detected, drag & drop Super Mario 64 (U) [!].z64 on to this screen");
 
     while (!gRomIsValid) {
+    #ifdef __SWITCH__ // Switch does not support wm_api main loop, so we just produce one frame directly
+        loading_screen_produce_one_frame();
+    #else
         wm_api->main_loop(loading_screen_produce_one_frame);
+    #endif
     }
 }
 

@@ -151,7 +151,13 @@ int main(int argc, char *argv[]) {
     if (!threadSuccess)
 #endif
     {
-        main_game_init(NULL); // failsafe incase threading doesn't work
+        // Failsafe: always show loading screen for a few seconds
+        init_loading_screen();
+        for (int i = 0; i < 180; i++) { // ~3 seconds at 60 FPS
+            loading_screen_produce_one_frame();
+        }
+        main_game_init(NULL);
+        loading_screen_reset();
     }
 
     // initialize sm64 data and controllers

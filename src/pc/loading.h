@@ -31,6 +31,7 @@ void loading_screen_reset_progress_bar(void);
 void render_loading_screen(void);
 void loading_screen_reset(void);
 void render_rom_setup_screen(void);
+void loading_screen_produce_one_frame(void);
 
 #else // LOADING_SCREEN_SUPPORTED
 
