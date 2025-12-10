@@ -358,7 +358,7 @@ else ifeq ($(TARGET_NX),1) # Nintendo Switch
 
     APP_TITLE := SM64 Coop DX
     APP_AUTHOR := The Coop DX Team
-    APP_VERSION := 1.0.0
+    APP_VERSION := 1.4.0
     APP_ICON := res/icon_AmericanEnglish.jpg
     APP_TITLEID := 0100534d36344350
     APP_JSON := res/npdm.json
