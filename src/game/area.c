@@ -90,6 +90,11 @@ u8 sSpawnTypeFromWarpBhv[] = {
     MARIO_SPAWN_AIRBORNE_STAR_COLLECT, MARIO_SPAWN_AIRBORNE_DEATH,       MARIO_SPAWN_LAUNCH_STAR_COLLECT,   MARIO_SPAWN_LAUNCH_DEATH,
 };
 
+Vp D_8032CF00 = { {
+    { 640, 480, 511, 0 },
+    { 640, 480, 511, 0 },
+} };
+
 Vp gViewportFullscreen = { {
     { 640, 480, 511, 0 },
     { 640, 480, 511, 0 },
