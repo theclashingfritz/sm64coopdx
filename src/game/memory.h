@@ -68,6 +68,7 @@ void *virtual_to_segmented(u32 segment, const void *addr);
 
 struct DynamicPool* dynamic_pool_init(void);
 void* dynamic_pool_alloc(struct DynamicPool *pool, u32 size);
+void* dynamic_pool_realloc(struct DynamicPool *pool, void* ptr, u32 size);
 void dynamic_pool_free(struct DynamicPool *pool, void* ptr);
 void dynamic_pool_free_pool(struct DynamicPool *pool);
 

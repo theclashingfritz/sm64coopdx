@@ -142,9 +142,24 @@ int64_t fs_read(fs_file_t *file, void *buf, const uint64_t size) {
     return file->parent->packer->read(file->parent->pack, file, buf, size);
 }
 
+bool fs_seek(fs_file_t *file, const int64_t ofs) {
+    if (!file) return false;
+    return file->parent->packer->seek(file->parent->pack, file, ofs);
+}
+
+int64_t fs_tell(fs_file_t *file) {
+    if (!file) return -1;
+    return file->parent->packer->tell(file->parent->pack, file);
+}
+
 int64_t fs_size(fs_file_t *file) {
     if (!file) return -1;
     return file->parent->packer->size(file->parent->pack, file);
+}
+
+int64_t fs_remaining(fs_file_t *file) {
+    if (!file) return -1;
+    return fs_size(file) - fs_tell(file);
 }
 
 bool fs_eof(fs_file_t *file) {

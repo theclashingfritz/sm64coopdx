@@ -84,8 +84,10 @@ void fs_pathlist_free(fs_pathlist_t *pathlist);
 fs_file_t *fs_open(const char *vpath);
 void fs_close(fs_file_t *file);
 int64_t fs_read(fs_file_t *file, void *buf, const uint64_t size);
-const char *fs_readline(fs_file_t *file, char *dst, const uint64_t size);
+bool fs_seek(fs_file_t *file, const int64_t ofs);
+int64_t fs_tell(fs_file_t *file);
 int64_t fs_size(fs_file_t *file);
+int64_t fs_remaining(fs_file_t *file);
 bool fs_eof(fs_file_t *file);
 
 void *fs_load_file(const char *vpath, uint64_t *outsize);

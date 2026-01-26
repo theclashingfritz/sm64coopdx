@@ -35,6 +35,26 @@ void* dynamic_pool_alloc(struct DynamicPool *pool, u32 size) {
     return node->ptr;
 }
 
+void *dynamic_pool_realloc(struct DynamicPool *pool, void *ptr, u32 size) {
+    if (!pool || !ptr) { return NULL; }
+    
+    struct DynamicPoolNode *node = pool->tail;
+    while (node) {
+        struct DynamicPoolNode *prev = node->prev;
+        if (node->ptr == ptr) { break; }
+        node = prev;
+    }
+    if (node == NULL) { return NULL; }
+    
+    u32 oldsize = node->size;
+    node->ptr = realloc(node->ptr, size);
+    node->size = size;
+    
+    pool->usedSpace += size - oldsize;
+    
+    return node->ptr;
+}
+
 void dynamic_pool_free(struct DynamicPool *pool, void* ptr) {
     if (!pool || !ptr) { return; }
 
