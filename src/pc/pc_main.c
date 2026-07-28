@@ -112,7 +112,7 @@ u8 gLuaVolumeLevel = 127;
 u8 gLuaVolumeSfx = 127;
 u8 gLuaVolumeEnv = 127;
 
-static struct AudioAPI *audio_api;
+struct AudioAPI *audio_api;
 struct GfxWindowManagerAPI *wm_api = &WAPI;
 
 extern void gfx_run(Gfx *commands);
@@ -301,7 +301,7 @@ void produce_interpolation_frames_and_delay(void) {
 // It also may help static analysis and bug catching.
 static s16 sAudioBuffer[SAMPLES_HIGH * 2 * 2] = { 0 };
 
-inline static void buffer_audio(void) {
+inline void buffer_audio(void) {
     bool shouldMute = (configMuteFocusLoss && !WAPI.has_focus()) || (gMasterVolume == 0);
     if (!shouldMute) {
         set_sequence_player_volume(SEQ_PLAYER_LEVEL, (f32)configMusicVolume / 127.0f * (f32)gLuaVolumeLevel / 127.0f);
