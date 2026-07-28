@@ -11,15 +11,6 @@
 #include "include/geo_commands.h"
 #include "pc/debuglog.h"
 
-// unused Mtx(s)
-s16 identityMtx[4][4] = { { 1, 0, 0, 0 }, { 0, 1, 0, 0 }, { 0, 0, 1, 0 }, { 0, 0, 0, 1 } };
-s16 zeroMtx[4][4] = { { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 } };
-
-Vec3f gVec3fZero = { 0.0f, 0.0f, 0.0f };
-Vec3s gVec3sZero = { 0, 0, 0 };
-Vec3f gVec3fOne = { 1.0f, 1.0f, 1.0f };
-UNUSED Vec3s gVec3sOne = { 1, 1, 1 };
-
 /**
  * Initialize a geo node with a given type. Sets all links such that there
  * are no siblings, parent or children for this node.
@@ -300,7 +291,26 @@ struct GraphNodeScale *init_graph_node_scale(struct DynamicPool *pool,
         init_scene_graph_node_links(&graphNode->node, GRAPH_NODE_TYPE_SCALE);
         graphNode->node.flags = (drawingLayer << 8) | (graphNode->node.flags & 0xFF);
         graphNode->scale = scale;
-        graphNode->prevScale = scale;
+        graphNode->displayList = dynos_gfx_get_writable_display_list(displayList);
+    }
+
+    return graphNode;
+}
+
+/**
+ * Allocates and returns a newly created XYZ scaling node
+ */
+struct GraphNodeScaleXYZ *init_graph_node_scale_xyz(struct DynamicPool *pool,
+                                                    struct GraphNodeScaleXYZ *graphNode, s32 drawingLayer,
+                                                    void *displayList, Vec3f scale) {
+    if (pool != NULL) {
+        graphNode = dynamic_pool_alloc(pool, sizeof(struct GraphNodeScaleXYZ));
+    }
+
+    if (graphNode != NULL) {
+        init_scene_graph_node_links(&graphNode->node, GRAPH_NODE_TYPE_SCALE_XYZ);
+        graphNode->node.flags = (drawingLayer << 8) | (graphNode->node.flags & 0xFF);
+        vec3f_copy(graphNode->scale, scale);
         graphNode->displayList = dynos_gfx_get_writable_display_list(displayList);
     }
 
@@ -536,6 +546,30 @@ struct GraphNodeHeldObject *init_graph_node_held_object(struct DynamicPool *pool
         if (nodeFunc != NULL) {
             nodeFunc(GEO_CONTEXT_CREATE, &graphNode->fnNode.node, pool);
         }
+    }
+
+    return graphNode;
+}
+
+/**
+ * Allocates and returns a newly created bone node with initial rotation/translation
+ */
+struct GraphNodeBone *init_graph_node_bone(struct DynamicPool *pool,
+                                           struct GraphNodeBone *graphNode,
+                                           s32 drawingLayer, void *displayList,
+                                           Vec3s translation, Vec3s rotation,
+                                           Vec3f scale) {
+    if (pool != NULL) {
+        graphNode = dynamic_pool_alloc(pool, sizeof(struct GraphNodeBone));
+    }
+
+    if (graphNode != NULL) {
+        init_scene_graph_node_links(&graphNode->node, GRAPH_NODE_TYPE_BONE);
+        vec3s_copy(graphNode->translation, translation);
+        vec3s_copy(graphNode->rotation, rotation);
+        vec3f_copy(graphNode->scale, scale);
+        graphNode->node.flags = (drawingLayer << 8) | (graphNode->node.flags & 0xFF);
+        graphNode->displayList = dynos_gfx_get_writable_display_list(displayList);
     }
 
     return graphNode;

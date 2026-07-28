@@ -195,7 +195,7 @@ static s32 get_num_frames_to_draw(f64 t) {
 }
 
 void produce_interpolation_frames_and_delay(void) {
-    bool is30Fps = (!configUncappedFramerate && configFrameLimit == FRAMERATE);
+    bool is30Fps = (configFramerateMode != RRM_UNLIMITED && configFrameLimit == FRAMERATE);
 
     gRenderingInterpolated = true;
 
@@ -224,7 +224,7 @@ void produce_interpolation_frames_and_delay(void) {
 
         sDrawnFrames++;
 
-        if (!is30Fps && configUncappedFramerate) { continue; }
+        if (!is30Fps && configFramerateMode == RRM_UNLIMITED) { continue; }
 
         // delay if our framerate is capped
         f64 now = clock_elapsed_f64();

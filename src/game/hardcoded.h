@@ -82,6 +82,7 @@ struct LevelValues {
     enum SeqId wingCapSequence;
     enum SeqId metalCapSequence;
     enum SeqId vanishCapSequence;
+    enum SeqId shellSequence;
     struct StarPositions starPositions;
     s16 cellHeightLimit;
     s16 floorLowerLimit;
@@ -94,6 +95,9 @@ struct LevelValues {
     u8 useGlobalStarIds;
     u8 zoomOutCameraOnPause;
     u8 jrbDarkenSkybox;
+    f32 wallMaxRadius;
+    f32 floorNormalMinY;
+    f32 ceilNormalMaxY;
 };
 
 extern struct LevelValues gLevelValues;

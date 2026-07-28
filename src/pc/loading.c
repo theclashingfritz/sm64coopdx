@@ -40,7 +40,7 @@ static void loading_screen_produce_frame_callback(void) {
     if (sLoading) { djui_base_render(&sLoading->base); }
 }
 
-static void loading_screen_produce_one_frame(void) {
+void loading_screen_produce_one_frame(void) {
     produce_one_dummy_frame(loading_screen_produce_frame_callback, 0x00, 0x00, 0x00);
 }
 
@@ -121,7 +121,7 @@ static void init_loading_screen(void) {
 
     // splash image
     } else {
-        struct DjuiImage* splashImage = djui_image_create(base, texture_coopdx_logo, 2048, 1024, 32);
+        struct DjuiImage* splashImage = djui_image_create(base, texture_coopdx_logo, 2048, 1024, G_IM_FMT_RGBA, G_IM_SIZ_32b);
         djui_base_set_location_type(&splashImage->base, DJUI_SVT_RELATIVE, DJUI_SVT_ABSOLUTE);
         djui_base_set_alignment(&splashImage->base, DJUI_HALIGN_CENTER, DJUI_VALIGN_TOP);
         djui_base_set_location(&splashImage->base, 0, -100);

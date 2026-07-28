@@ -16,3 +16,21 @@ sm64coopdx is moddable via Lua, similar to Roblox and Garry's Mod's Lua APIs. To
 
 ## Wiki
 The wiki is made using GitHub's wiki feature, you can go to the wiki tab or click [here](https://github.com/coop-deluxe/sm64coopdx/wiki).
+
+## About this Fork
+This fork is a modified version of the [Sm64coopdx TheClashingFritz nx-support](https://github.com/theclashingfritz/sm64coopdx/tree/nx-support) with the support of the newest version 1.4.
+Thanks to her work it was relatively easy to merge the 1.4 version
+
+## Build instructions
+To build you need to use this command, with a proper DevKitPro installation and using the msys2_shell.cmd
+```console
+foo@bar MSYS /c/path
+$ make TARGET_NX=1 CONTROLLER_API=SWITCH 
+Compiling for Nintendo Switch
+==== Build Options ====
+Version:        us
+Microcode:      f3dex2e
+Build Matching: no
+=======================
+
+```

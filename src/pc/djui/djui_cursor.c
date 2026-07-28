@@ -2,13 +2,14 @@
 #include "djui_panel.h"
 #include "pc/controller/controller_mouse.h"
 #include "pc/gfx/gfx_window_manager_api.h"
-#include "pc/game_main.h"
+#include "pc/pc_main.h"
+
+#define CURSOR_GFX_MAX_SIZE 20
 
 extern ALIGNED8 u8 gd_texture_hand_open[];
 extern ALIGNED8 u8 gd_texture_hand_closed[];
 
 struct DjuiImage* sMouseCursor = NULL;
-
 static bool sCursorMouseControlled = false;
 static struct DjuiBase* sInputControlledBase = NULL;
 
@@ -17,7 +18,14 @@ static f32 sSavedMouseY = 0;
 f32 gCursorX = 0;
 f32 gCursorY = 0;
 
+static Gfx sDjuiCursorGfx[CURSOR_GFX_MAX_SIZE] = { 0 };
+
+static f32 sPrevCursorX = 0;
+static f32 sPrevCursorY = 0;
+
 void djui_cursor_set_visible(bool visible) {
+
+#ifndef __SWITCH__
     if (sMouseCursor) {
         djui_base_set_visible(&sMouseCursor->base, visible);
     }
@@ -31,6 +39,7 @@ void djui_cursor_set_visible(bool visible) {
     }
     sSavedMouseX = mouse_window_x;
     sSavedMouseY = mouse_window_y;
+#endif
 }
 
 bool djui_cursor_inside_base(struct DjuiBase* base) {
@@ -85,8 +94,8 @@ static void djui_cursor_move_check(s8 xDir, s8 yDir, struct DjuiBase** pick, str
             if (*pick == NULL) {
                 *pick = base;
             } else {
-                f32 pickDist = djui_cursor_base_distance(*pick, xDir ? 1.0f : 2.0f, yDir ? 1.0f : 2.0f);
-                f32 baseDist = djui_cursor_base_distance(base,  xDir ? 1.0f : 2.0f, yDir ? 1.0f : 2.0f);
+                f32 pickDist = djui_cursor_base_distance(*pick, xDir ? 1.0f : 1.2f, yDir ? 1.0f : 2.0f);
+                f32 baseDist = djui_cursor_base_distance(base,  xDir ? 1.0f : 1.2f, yDir ? 1.0f : 2.0f);
                 if (baseDist < pickDist) { *pick = base; }
             }
         }
@@ -111,7 +120,9 @@ void djui_cursor_move(s8 xDir, s8 yDir) {
     }
 }
 
-void djui_cursor_update(void) {
+static void djui_cursor_update_position(void) {
+    sPrevCursorX = gCursorX;
+    sPrevCursorY = gCursorY;
 #if defined(CAPI_SDL2) || defined(CAPI_SDL1) || defined(CAPI_SWITCH)
     if (djui_interactable_is_binding()) { return; }
     if (sMouseCursor == NULL) { return; }
@@ -147,16 +158,44 @@ void djui_cursor_update(void) {
 
     // set cursor sprite
     if ((gInteractablePad.button & PAD_BUTTON_A) || (mouse_window_buttons & MOUSE_BUTTON_1)) {
-        djui_image_set_image(sMouseCursor, gd_texture_hand_closed, 32, 32, 16);
+        sMouseCursor->textureInfo.texture = gd_texture_hand_closed;
     } else {
-        djui_image_set_image(sMouseCursor, gd_texture_hand_open, 32, 32, 16);
+        sMouseCursor->textureInfo.texture = gd_texture_hand_open;
     }
 #endif
+}
+
+static void djui_cursor_render_cursor(void) {
+    gDisplayListHead = sDjuiCursorGfx;
     djui_base_render(&sMouseCursor->base);
+    gSPEndDisplayList(gDisplayListHead++);
+    if (gDisplayListHead - sDjuiCursorGfx >= CURSOR_GFX_MAX_SIZE) {
+        sys_fatal("CURSOR_GFX_MAX_SIZE is too small! %lu", gDisplayListHead - sDjuiCursorGfx);
+    }
+}
+
+// This isn't actually interpolation, it just updates the cursor at a faster rate
+void djui_cursor_interp(void) {
+    djui_cursor_update_position();
+
+    if (sPrevCursorX != gCursorX || sPrevCursorY != gCursorY) {
+        djui_cursor_render_cursor();
+    }
+}
+
+void djui_cursor_update(void) {
+    djui_cursor_update_position();
+
+    if (!djui_panel_is_active()) { return; }
+
+    Gfx *savedDisplayListHead = gDisplayListHead;
+    djui_cursor_render_cursor();
+    gDisplayListHead = savedDisplayListHead;
+    gSPDisplayList(gDisplayListHead++, sDjuiCursorGfx);
 }
 
 void djui_cursor_create(void) {
-    sMouseCursor = djui_image_create(NULL, gd_texture_hand_open, 32, 32, 16);
+    sMouseCursor = djui_image_create(NULL, gd_texture_hand_open, 32, 32, G_IM_FMT_RGBA, G_IM_SIZ_16b);
     djui_base_set_location(&sMouseCursor->base, 0, 0);
     djui_base_set_size(&sMouseCursor->base, 64, 64);
 }

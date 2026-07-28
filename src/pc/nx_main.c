@@ -151,7 +151,8 @@ int main(int argc, char *argv[]) {
     if (!threadSuccess)
 #endif
     {
-        main_game_init(NULL); // failsafe incase threading doesn't work
+        // Failsafe: In case threading doesn't work
+        main_game_init(NULL);
     }
 
     // initialize sm64 data and controllers
